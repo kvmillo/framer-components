@@ -31,7 +31,8 @@ function useWaveOnScroll(reverse: boolean) {
         }
 
         const tick = () => {
-            smooth += (vel - smooth) * springFactor
+            const isReturning = isMobile && (Math.abs(vel) < 80 || vel * smooth < 0)
+            smooth += (vel - smooth) * (isReturning ? 0.22 : springFactor)
             vel *= velDecay
             const angle = Math.max(-maxAngle, Math.min(maxAngle, smooth / divisor))
             el.style.transform = `rotateZ(${reverse ? -angle : angle}deg)`
