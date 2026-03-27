@@ -186,12 +186,8 @@ export default function BetterCarousel(props: CarouselProps) {
         let wheelEndTimer: ReturnType<typeof setTimeout> | null = null
         let springRafId: number | null = null
 
-        // easeOutBack: fast deceleration with a slight overshoot — feels like a spring
-        const springEase = (t: number): number => {
-            const c1 = 1.2
-            const c3 = c1 + 1
-            return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2)
-        }
+        // easeOutCubic: smooth natural deceleration, no overshoot
+        const springEase = (t: number): number => 1 - Math.pow(1 - t, 3)
 
         const cancelSpring = () => {
             if (springRafId !== null) {
@@ -203,7 +199,7 @@ export default function BetterCarousel(props: CarouselProps) {
         const animateSpringBack = (startPos: number, targetPos: number) => {
             cancelSpring()
             const startTime = performance.now()
-            const duration = 420
+            const duration = 280
 
             const frame = (now: number) => {
                 const t = Math.min((now - startTime) / duration, 1)
@@ -257,7 +253,18 @@ export default function BetterCarousel(props: CarouselProps) {
             const Move = splide.Components?.Move
             if (!Move) return
 
-            const currentPos: number = Move.getPosition()
+            // Read mid-animation position via DOMMatrix so we get the live visual
+            // position even if a CSS snap transition is still running, then clear
+            // the transition so subsequent translate() calls are instant.
+            const list = el.querySelector('.splide__list') as HTMLElement | null
+            let currentPos: number = Move.getPosition()
+            if (list) {
+                const transformStr = getComputedStyle(list).transform
+                if (transformStr && transformStr !== 'none') {
+                    currentPos = new DOMMatrix(transformStr).m41
+                }
+                list.style.transition = 'none'
+            }
             const newPos = currentPos - dx
 
             const isLoop: boolean = splide.options?.type === "loop"
@@ -271,11 +278,11 @@ export default function BetterCarousel(props: CarouselProps) {
                 if (newPos < lo) {
                     // Past start — rubber band: resistance grows with excess distance
                     const excess = lo - newPos
-                    translatedPos = lo - excess / (1 + excess / 150)
+                    translatedPos = lo - excess / (1 + excess / 80)
                 } else if (newPos > hi) {
                     // Past end — rubber band
                     const excess = newPos - hi
-                    translatedPos = hi + excess / (1 + excess / 150)
+                    translatedPos = hi + excess / (1 + excess / 80)
                 } else {
                     translatedPos = newPos
                 }
