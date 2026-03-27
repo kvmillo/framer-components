@@ -175,15 +175,67 @@ export default function BetterCarousel(props: CarouselProps) {
 
     // Trackpad / wheel scroll:
     // • Moves the track in real-time via Move.translate() for a free-drag feel
-    // • Clamps position to slide boundaries (non-loop only) so slides can't scroll out of view
-    // • After 150 ms of no wheel events, snaps to the nearest slide
-    //   Uses allowSameIndex=true so Splide snaps even when the logical index
-    //   hasn't changed but the track position has drifted (e.g. slight overscroll)
+    // • In non-loop mode, overscrolling past the boundary applies rubber-band resistance
+    //   (iOS-style: the further you pull, the less it moves) instead of hard-clamping
+    // • After 150 ms of no wheel events, springs back to the boundary (if overscrolled)
+    //   with an easeOutBack animation, then snaps to the nearest slide
     React.useEffect(() => {
         const el = splideRef.current
         if (!el) return
 
         let wheelEndTimer: ReturnType<typeof setTimeout> | null = null
+        let springRafId: number | null = null
+
+        // easeOutBack: fast deceleration with a slight overshoot — feels like a spring
+        const springEase = (t: number): number => {
+            const c1 = 1.2
+            const c3 = c1 + 1
+            return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2)
+        }
+
+        const cancelSpring = () => {
+            if (springRafId !== null) {
+                cancelAnimationFrame(springRafId)
+                springRafId = null
+            }
+        }
+
+        const animateSpringBack = (startPos: number, targetPos: number) => {
+            cancelSpring()
+            const startTime = performance.now()
+            const duration = 420
+
+            const frame = (now: number) => {
+                const t = Math.min((now - startTime) / duration, 1)
+                const pos = startPos + (targetPos - startPos) * springEase(t)
+
+                const s: SplideInstance = splideInstanceRef.current
+                if (!s) return
+                const M = s.Components?.Move
+                if (!M) return
+
+                M.translate(pos)
+
+                if (t < 1) {
+                    springRafId = requestAnimationFrame(frame)
+                } else {
+                    springRafId = null
+                    // Snap to the closest slide at the boundary
+                    let closestIndex = 0
+                    let closestDist = Infinity
+                    for (let i = 0; i < s.length; i++) {
+                        const dist = Math.abs(targetPos - M.toPosition(i, true))
+                        if (dist < closestDist) {
+                            closestDist = dist
+                            closestIndex = i
+                        }
+                    }
+                    s.Components.Controller.go(closestIndex, true)
+                }
+            }
+
+            springRafId = requestAnimationFrame(frame)
+        }
 
         const handleWheel = (e: WheelEvent) => {
             if (!wheelScrollEnabled) return
@@ -196,6 +248,9 @@ export default function BetterCarousel(props: CarouselProps) {
 
             e.preventDefault()
 
+            // Cancel any ongoing spring-back so next getPosition() is accurate
+            cancelSpring()
+
             const splide: SplideInstance = splideInstanceRef.current
             if (!splide) return
 
@@ -205,23 +260,31 @@ export default function BetterCarousel(props: CarouselProps) {
             const currentPos: number = Move.getPosition()
             const newPos = currentPos - dx
 
-            // Clamp to slide boundaries in non-loop mode
             const isLoop: boolean = splide.options?.type === "loop"
             if (!isLoop) {
                 const pos0: number = Move.toPosition(0, true)
-                const posLast: number = Move.toPosition(
-                    splide.length - 1,
-                    true
-                )
-                // Use min/max to handle both LTR and RTL position ordering
+                const posLast: number = Move.toPosition(splide.length - 1, true)
                 const lo = Math.min(pos0, posLast)
                 const hi = Math.max(pos0, posLast)
-                Move.translate(Math.max(lo, Math.min(hi, newPos)))
+
+                let translatedPos: number
+                if (newPos < lo) {
+                    // Past start — rubber band: resistance grows with excess distance
+                    const excess = lo - newPos
+                    translatedPos = lo - excess / (1 + excess / 150)
+                } else if (newPos > hi) {
+                    // Past end — rubber band
+                    const excess = newPos - hi
+                    translatedPos = hi + excess / (1 + excess / 150)
+                } else {
+                    translatedPos = newPos
+                }
+                Move.translate(translatedPos)
             } else {
                 Move.translate(newPos)
             }
 
-            // Debounce: snap to nearest slide after scrolling stops
+            // Debounce: after scrolling stops, spring back (if overscrolled) or snap
             if (wheelEndTimer !== null) clearTimeout(wheelEndTimer)
             wheelEndTimer = setTimeout(() => {
                 wheelEndTimer = null
@@ -231,12 +294,25 @@ export default function BetterCarousel(props: CarouselProps) {
                 if (!M) return
 
                 const pos: number = M.getPosition()
-                const slideCount: number = s.length
+                const isLoopMode: boolean = s.options?.type === "loop"
 
+                if (!isLoopMode) {
+                    const p0: number = M.toPosition(0, true)
+                    const pLast: number = M.toPosition(s.length - 1, true)
+                    const lo = Math.min(p0, pLast)
+                    const hi = Math.max(p0, pLast)
+
+                    if (pos < lo || pos > hi) {
+                        // Overscrolled — spring back to boundary then snap
+                        animateSpringBack(pos, pos < lo ? lo : hi)
+                        return
+                    }
+                }
+
+                // Normal snap to nearest slide
                 let closestIndex = 0
                 let closestDist = Infinity
-
-                for (let i = 0; i < slideCount; i++) {
+                for (let i = 0; i < s.length; i++) {
                     const targetPos: number = M.toPosition(i, true)
                     const dist = Math.abs(pos - targetPos)
                     if (dist < closestDist) {
@@ -244,7 +320,6 @@ export default function BetterCarousel(props: CarouselProps) {
                         closestIndex = i
                     }
                 }
-
                 // allowSameIndex=true ensures snap fires even when index didn't change
                 s.Components.Controller.go(closestIndex, true)
             }, 150)
@@ -255,6 +330,7 @@ export default function BetterCarousel(props: CarouselProps) {
         return () => {
             el.removeEventListener("wheel", handleWheel)
             if (wheelEndTimer !== null) clearTimeout(wheelEndTimer)
+            cancelSpring()
         }
     }, [wheelScrollEnabled, splideInstance])
 
