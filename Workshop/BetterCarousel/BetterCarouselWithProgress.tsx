@@ -201,8 +201,8 @@ export default function BetterCarousel(props: CarouselProps) {
             cancelSpring()
             let pos = startPos
             let velocity = 0
-            const stiffness = 300
-            const damping = 28
+            const stiffness = 500
+            const damping = 35
             let lastTime = performance.now()
 
             const frame = (now: number) => {
