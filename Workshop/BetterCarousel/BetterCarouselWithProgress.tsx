@@ -186,9 +186,6 @@ export default function BetterCarousel(props: CarouselProps) {
         let wheelEndTimer: ReturnType<typeof setTimeout> | null = null
         let springRafId: number | null = null
 
-        // easeOutCubic: smooth natural deceleration, no overshoot
-        const springEase = (t: number): number => 1 - Math.pow(1 - t, 3)
-
         const cancelSpring = () => {
             if (springRafId !== null) {
                 cancelAnimationFrame(springRafId)
@@ -196,14 +193,26 @@ export default function BetterCarousel(props: CarouselProps) {
             }
         }
 
+        // Spring physics simulation — runs per-frame so the bounce feels physical.
+        // stiffness controls how fast it snaps back; damping controls how quickly
+        // it settles. Slightly underdamped (damping < 2*sqrt(stiffness)) gives a
+        // subtle overshoot that reads as natural motion.
         const animateSpringBack = (startPos: number, targetPos: number) => {
             cancelSpring()
-            const startTime = performance.now()
-            const duration = 280
+            let pos = startPos
+            let velocity = 0
+            const stiffness = 300
+            const damping = 28
+            let lastTime = performance.now()
 
             const frame = (now: number) => {
-                const t = Math.min((now - startTime) / duration, 1)
-                const pos = startPos + (targetPos - startPos) * springEase(t)
+                // Cap dt so a tab switch or long frame doesn't cause a huge jump
+                const dt = Math.min((now - lastTime) / 1000, 0.064)
+                lastTime = now
+
+                const displacement = pos - targetPos
+                velocity += (-stiffness * displacement - damping * velocity) * dt
+                pos += velocity * dt
 
                 const s: SplideInstance = splideInstanceRef.current
                 if (!s) return
@@ -212,11 +221,10 @@ export default function BetterCarousel(props: CarouselProps) {
 
                 M.translate(pos)
 
-                if (t < 1) {
-                    springRafId = requestAnimationFrame(frame)
-                } else {
+                // Settle once motion is negligible
+                if (Math.abs(displacement) < 0.5 && Math.abs(velocity) < 5) {
                     springRafId = null
-                    // Snap to the closest slide at the boundary
+                    M.translate(targetPos)
                     let closestIndex = 0
                     let closestDist = Infinity
                     for (let i = 0; i < s.length; i++) {
@@ -227,6 +235,8 @@ export default function BetterCarousel(props: CarouselProps) {
                         }
                     }
                     s.Components.Controller.go(closestIndex, true)
+                } else {
+                    springRafId = requestAnimationFrame(frame)
                 }
             }
 
