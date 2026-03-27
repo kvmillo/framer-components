@@ -11,6 +11,8 @@ function useWaveOnScroll(reverse: boolean) {
         const isMobile = window.innerWidth < 768
         const maxAngle = isMobile ? 3.5 : 1.6
         const divisor = isMobile ? 600 : 1250
+        const springFactor = isMobile ? 0.14 : 0.08
+        const velDecay = isMobile ? 0.82 : 0.88
 
         el.style.transformOrigin = "50% 1%"
 
@@ -29,8 +31,8 @@ function useWaveOnScroll(reverse: boolean) {
         }
 
         const tick = () => {
-            smooth += (vel - smooth) * 0.08
-            vel *= 0.88
+            smooth += (vel - smooth) * springFactor
+            vel *= velDecay
             const angle = Math.max(-maxAngle, Math.min(maxAngle, smooth / divisor))
             el.style.transform = `rotateZ(${reverse ? -angle : angle}deg)`
             rafId = requestAnimationFrame(tick)
