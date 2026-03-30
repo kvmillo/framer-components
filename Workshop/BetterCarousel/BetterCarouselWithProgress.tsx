@@ -225,6 +225,9 @@ export default function BetterCarousel(props: CarouselProps) {
                 if (Math.abs(displacement) < 0.5 && Math.abs(velocity) < 5) {
                     springRafId = null
                     M.translate(targetPos)
+                    // Restore transition so Splide can animate the final snap
+                    const listEl = el?.querySelector(".splide__list") as HTMLElement | null
+                    if (listEl) listEl.style.transition = ""
                     let closestIndex = 0
                     let closestDist = Infinity
                     for (let i = 0; i < s.length; i++) {
@@ -325,6 +328,9 @@ export default function BetterCarousel(props: CarouselProps) {
                         return
                     }
                 }
+
+                // Restore transition so Splide can animate the snap
+                if (list) list.style.transition = ""
 
                 // Normal snap to nearest slide
                 let closestIndex = 0
