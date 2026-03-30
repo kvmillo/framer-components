@@ -703,6 +703,7 @@ export default function BetterCarousel(props: CarouselProps) {
                 overflow: parentOverflow,
                 boxSizing: "border-box",
                 width: "100%",
+                touchAction: "pan-y",
             }}
         >
             {slideFrames && slideFrames.length > 0 ? (
@@ -714,6 +715,7 @@ export default function BetterCarousel(props: CarouselProps) {
                         height: "auto",
                         cursor: isDragging ? "grabbing" : "grab",
                         overflow: "visible",
+                        touchAction: "pan-y",
                     }}
                 >
                     <div
