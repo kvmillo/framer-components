@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Frame, addPropertyControls, ControlType } from "framer"
+import { addPropertyControls, ControlType } from "framer"
 
 /**
  * @framerDisableUnlink
@@ -690,19 +690,14 @@ export default function BetterCarousel(props: CarouselProps) {
     }
 
     return (
-        <Frame
-            background="transparent"
-            width={props.width}
-            height={props.height || "auto"}
-            {...props}
+        <div
             style={{
                 display: "block",
                 position: "relative",
-                WebkitOverflowScrolling: "touch",
-                willChange: "transform",
                 overflow: parentOverflow,
                 boxSizing: "border-box",
                 width: "100%",
+                height: "auto",
                 touchAction: "pan-y",
             }}
         >
@@ -716,6 +711,8 @@ export default function BetterCarousel(props: CarouselProps) {
                         cursor: isDragging ? "grabbing" : "grab",
                         overflow: "visible",
                         touchAction: "pan-y",
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
                     }}
                 >
                     <div
@@ -831,7 +828,7 @@ export default function BetterCarousel(props: CarouselProps) {
                     ))}
                 </div>
             )}
-        </Frame>
+        </div>
     )
 }
 
