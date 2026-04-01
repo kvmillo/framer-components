@@ -346,7 +346,7 @@ export default function JotFormCareer(props: Props) {
                                 padding: `${fileUpload.paddingV}px ${fileUpload.paddingH}px`,
                                 textAlign: fileUpload.layout === "vertical" ? "center" : undefined,
                                 background: fileHovered ? `${input.focusBorderColor}10` : input.bg,
-                                border: `1px ${fileHovered ? "dashed" : fileUpload.borderStyle} ${errors.resume ? form.errorColor : fileHovered ? input.focusBorderColor : input.borderColor}`,
+                                border: `1px ${fileHovered ? "dashed" : fileUpload.borderStyle} ${errors.resume ? form.errorColor : fileHovered ? input.focusBorderColor : fileUpload.borderColor}`,
                                 borderRadius: input.borderRadius,
                                 cursor: "pointer",
                                 transition: "border-color 0.15s ease, background 0.15s ease",
@@ -627,6 +627,7 @@ interface FileUploadProps {
     paddingV: number
     paddingH: number
     borderStyle: "solid" | "dashed" | "dotted"
+    borderColor: string
     iconSize: number
     iconOpacity: number
     iconColor: string
@@ -928,6 +929,11 @@ addPropertyControls(JotFormCareer, {
                 optionTitles: ["Solid", "Dashed", "Dotted"],
                 defaultValue: "dashed",
                 title: "Border Style",
+            },
+            borderColor: {
+                type: ControlType.Color,
+                defaultValue: "rgba(0,0,0,0.15)",
+                title: "Border Color",
             },
             icon: {
                 type: ControlType.Image,
