@@ -524,8 +524,9 @@ export default function JotFormCareer(props: Props) {
                             padding: `${button.paddingV}px ${button.paddingH}px`,
                             background: buttonBaseBg,
                             color: button.textColor,
-                            border: button.borderWidth > 0
-                                ? `${button.borderWidth}px solid ${button.borderColor}`
+                            border: "none",
+                            boxShadow: button.borderWidth > 0
+                                ? `inset 0 0 0 ${button.borderWidth}px ${button.borderColor}`
                                 : "none",
                             borderRadius: button.borderRadius,
                             cursor: status === "loading" ? "wait" : "pointer",
