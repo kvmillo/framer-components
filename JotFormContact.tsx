@@ -103,11 +103,13 @@ export default function JotFormContact(props: Props) {
 
     // ─── Button background ────────────────────────────────────────────────────
 
+    const isHovered = buttonHovered && status !== "loading"
     const buttonBg = button.useGradient
-        ? `linear-gradient(${button.gradientAngle}deg, ${button.gradientFrom}, ${button.gradientTo})`
-        : buttonHovered && status !== "loading" ? button.hoverBg : button.bg
-    const buttonFilter =
-        button.useGradient && buttonHovered && status !== "loading" ? "brightness(0.9)" : undefined
+        ? isHovered
+            ? `linear-gradient(${button.gradientAngle}deg, ${button.gradientHoverFrom}, ${button.gradientHoverTo})`
+            : `linear-gradient(${button.gradientAngle}deg, ${button.gradientFrom}, ${button.gradientTo})`
+        : isHovered ? button.hoverBg : button.bg
+    const buttonFilter = undefined
 
     // ─── Shared style helpers ─────────────────────────────────────────────────
 
@@ -476,6 +478,8 @@ interface ButtonProps {
     gradientFrom: string
     gradientTo: string
     gradientAngle: number
+    gradientHoverFrom: string
+    gradientHoverTo: string
 }
 
 interface CheckboxProps {
@@ -695,6 +699,18 @@ addPropertyControls(JotFormContact, {
                 max: 360,
                 step: 5,
                 title: "Gradient Angle",
+                hidden: (props) => !props.useGradient,
+            },
+            gradientHoverFrom: {
+                type: ControlType.Color,
+                defaultValue: "#333333",
+                title: "Hover From",
+                hidden: (props) => !props.useGradient,
+            },
+            gradientHoverTo: {
+                type: ControlType.Color,
+                defaultValue: "#666666",
+                title: "Hover To",
                 hidden: (props) => !props.useGradient,
             },
         },
