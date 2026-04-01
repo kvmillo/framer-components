@@ -116,7 +116,7 @@ export default function JotFormContact(props: Props) {
         width: "100%",
         boxSizing: "border-box",
         background: input.bg,
-        border: `1px solid ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
+        border: `1px ${input.borderStyle} ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
         borderRadius: input.borderRadius,
         padding: `${input.paddingV}px ${input.paddingH}px`,
         color: input.textColor,
@@ -452,6 +452,7 @@ interface InputProps {
     font: Record<string, any>
     bg: string
     borderColor: string
+    borderStyle: "solid" | "dashed" | "dotted"
     focusBorderColor: string
     textColor: string
     placeholderColor: string
@@ -541,6 +542,14 @@ addPropertyControls(JotFormContact, {
                 defaultValue: "rgba(0,0,0,0.15)",
                 title: "Border Color",
             },
+            borderStyle: {
+                type: ControlType.Enum,
+                options: ["solid", "dashed", "dotted"],
+                optionTitles: ["Solid", "Dashed", "Dotted"],
+                displaySegmentedControl: true,
+                defaultValue: "solid",
+                title: "Border Style",
+            },
             focusBorderColor: {
                 type: ControlType.Color,
                 defaultValue: "rgba(0,0,0,0.6)",
@@ -569,7 +578,7 @@ addPropertyControls(JotFormContact, {
                 type: ControlType.Number,
                 defaultValue: 11,
                 min: 4,
-                max: 64,
+                max: 400,
                 step: 1,
                 displayStepper: true,
                 title: "Padding V",
@@ -578,7 +587,7 @@ addPropertyControls(JotFormContact, {
                 type: ControlType.Number,
                 defaultValue: 14,
                 min: 4,
-                max: 64,
+                max: 400,
                 step: 1,
                 displayStepper: true,
                 title: "Padding H",
