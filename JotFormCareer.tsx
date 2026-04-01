@@ -351,27 +351,37 @@ export default function JotFormCareer(props: Props) {
                                 boxSizing: "border-box",
                             }}
                         >
-                            <svg
-                                width={fileUpload.iconSize}
-                                height={fileUpload.iconSize}
-                                viewBox="0 0 20 20"
-                                fill="none"
-                                style={{ flexShrink: 0, opacity: resumeFile ? 0.7 : 0.4 }}
-                            >
-                                <path
-                                    d="M10 13V5M10 5L7 8M10 5l3 3"
-                                    stroke={resumeFile ? button.bg : input.textColor}
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
+                            {fileUpload.icon ? (
+                                <img
+                                    src={fileUpload.icon}
+                                    width={fileUpload.iconSize}
+                                    height={fileUpload.iconSize}
+                                    style={{ flexShrink: 0, objectFit: "contain", opacity: resumeFile ? 0.7 : 0.4 }}
+                                    alt=""
                                 />
-                                <path
-                                    d="M4 16h12"
-                                    stroke={resumeFile ? button.bg : input.textColor}
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                />
-                            </svg>
+                            ) : (
+                                <svg
+                                    width={fileUpload.iconSize}
+                                    height={fileUpload.iconSize}
+                                    viewBox="0 0 20 20"
+                                    fill="none"
+                                    style={{ flexShrink: 0, opacity: resumeFile ? 0.7 : 0.4 }}
+                                >
+                                    <path
+                                        d="M10 13V5M10 5L7 8M10 5l3 3"
+                                        stroke={resumeFile ? button.bg : input.textColor}
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                    <path
+                                        d="M4 16h12"
+                                        stroke={resumeFile ? button.bg : input.textColor}
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            )}
                             <span
                                 style={{
                                     ...input.font,
@@ -598,6 +608,7 @@ interface FileUploadProps {
     paddingH: number
     borderStyle: "solid" | "dashed" | "dotted"
     iconSize: number
+    icon: string
 }
 
 interface CaptionProps {
@@ -883,6 +894,10 @@ addPropertyControls(JotFormCareer, {
                 optionTitles: ["Solid", "Dashed", "Dotted"],
                 defaultValue: "dashed",
                 title: "Border Style",
+            },
+            icon: {
+                type: ControlType.Image,
+                title: "Icon",
             },
             iconSize: {
                 type: ControlType.Number,
