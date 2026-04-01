@@ -546,7 +546,6 @@ addPropertyControls(JotFormContact, {
                 type: ControlType.Enum,
                 options: ["solid", "dashed", "dotted"],
                 optionTitles: ["Solid", "Dashed", "Dotted"],
-                displaySegmentedControl: true,
                 defaultValue: "solid",
                 title: "Border Style",
             },
