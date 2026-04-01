@@ -352,8 +352,8 @@ export default function JotFormCareer(props: Props) {
                             }}
                         >
                             <svg
-                                width="20"
-                                height="20"
+                                width={fileUpload.iconSize}
+                                height={fileUpload.iconSize}
                                 viewBox="0 0 20 20"
                                 fill="none"
                                 style={{ flexShrink: 0, opacity: resumeFile ? 0.7 : 0.4 }}
@@ -597,6 +597,7 @@ interface FileUploadProps {
     paddingV: number
     paddingH: number
     borderStyle: "solid" | "dashed" | "dotted"
+    iconSize: number
 }
 
 interface CaptionProps {
@@ -882,6 +883,15 @@ addPropertyControls(JotFormCareer, {
                 optionTitles: ["Solid", "Dashed", "Dotted"],
                 defaultValue: "dashed",
                 title: "Border Style",
+            },
+            iconSize: {
+                type: ControlType.Number,
+                defaultValue: 20,
+                min: 12,
+                max: 80,
+                step: 1,
+                displayStepper: true,
+                title: "Icon Size",
             },
             paddingV: {
                 type: ControlType.Number,
