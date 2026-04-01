@@ -19,12 +19,15 @@ export default function JotFormCareer(props: Props) {
         button,
         checkbox,
         fileUpload,
+        caption,
         label,
         form,
         submitButtonText,
         showSuccessMessage,
         successMessage,
     } = props
+
+    const scopeId = useRef(`jfca-${Math.random().toString(36).slice(2, 8)}`).current
 
     const [values, setValues] = useState({
         firstName: "",
@@ -115,6 +118,14 @@ export default function JotFormCareer(props: Props) {
         form.align === "center" ? "center" : form.align === "right" ? "flex-end" : "flex-start"
     const textAlign = form.align as CSSProperties["textAlign"]
 
+    // ─── Button background ────────────────────────────────────────────────────
+
+    const buttonBg = button.useGradient
+        ? `linear-gradient(${button.gradientAngle}deg, ${button.gradientFrom}, ${button.gradientTo})`
+        : buttonHovered && status !== "loading" ? button.hoverBg : button.bg
+    const buttonFilter =
+        button.useGradient && buttonHovered && status !== "loading" ? "brightness(0.9)" : undefined
+
     // ─── Shared style helpers ─────────────────────────────────────────────────
 
     const inputStyle = (field: string): CSSProperties => ({
@@ -122,7 +133,7 @@ export default function JotFormCareer(props: Props) {
         width: "100%",
         boxSizing: "border-box",
         background: input.bg,
-        border: `1px ${input.borderStyle} ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
+        border: `1px solid ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
         borderRadius: input.borderRadius,
         padding: `${input.paddingV}px ${input.paddingH}px`,
         color: input.textColor,
@@ -148,6 +159,13 @@ export default function JotFormCareer(props: Props) {
         textAlign,
         ...label.font,
         fontWeight: 400,
+    }
+
+    const captionStyle: CSSProperties = {
+        marginTop: 4,
+        color: caption.color,
+        textAlign,
+        ...caption.font,
     }
 
     const fieldStyle: CSSProperties = { display: "flex", flexDirection: "column", width: "100%" }
@@ -190,330 +208,345 @@ export default function JotFormCareer(props: Props) {
     // ─── Main form ────────────────────────────────────────────────────────────
 
     return (
-        <div
-            style={{
-                position: "relative",
-                background: form.bg,
-                width: "100%",
-                boxSizing: "border-box",
-                ...style,
-            }}
-        >
-            <form
-                onSubmit={handleSubmit}
-                noValidate
+        <>
+            <style>{`
+                .${scopeId} input::placeholder,
+                .${scopeId} textarea::placeholder {
+                    color: ${input.placeholderColor};
+                    opacity: 1;
+                }
+            `}</style>
+            <div
+                className={scopeId}
                 style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: form.gap,
-                    alignItems,
+                    position: "relative",
+                    background: form.bg,
+                    width: "100%",
+                    boxSizing: "border-box",
+                    ...style,
                 }}
             >
-                {/* Row: First Name + Last Name */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: form.gap, width: "100%" }}>
-                    <div style={fieldStyle}>
-                        <label style={labelStyle}>First name *</label>
-                        <input
-                            type="text"
-                            placeholder="John"
-                            value={values.firstName}
-                            onChange={(e) => set("firstName", e.target.value)}
-                            onFocus={() => startTransition(() => setFocused("firstName"))}
-                            onBlur={() => startTransition(() => setFocused(null))}
-                            style={inputStyle("firstName")}
-                        />
-                        {errors.firstName && <span style={errorStyle}>{errors.firstName}</span>}
-                    </div>
-                    <div style={fieldStyle}>
-                        <label style={labelStyle}>Last name *</label>
-                        <input
-                            type="text"
-                            placeholder="Doe"
-                            value={values.lastName}
-                            onChange={(e) => set("lastName", e.target.value)}
-                            onFocus={() => startTransition(() => setFocused("lastName"))}
-                            onBlur={() => startTransition(() => setFocused(null))}
-                            style={inputStyle("lastName")}
-                        />
-                        {errors.lastName && <span style={errorStyle}>{errors.lastName}</span>}
-                    </div>
-                </div>
-
-                {/* Email */}
-                <div style={fieldStyle}>
-                    <label style={labelStyle}>Email address *</label>
-                    <input
-                        type="email"
-                        placeholder="example@example.com"
-                        value={values.email}
-                        onChange={(e) => set("email", e.target.value)}
-                        onFocus={() => startTransition(() => setFocused("email"))}
-                        onBlur={() => startTransition(() => setFocused(null))}
-                        style={inputStyle("email")}
-                    />
-                    {errors.email && <span style={errorStyle}>{errors.email}</span>}
-                </div>
-
-                {/* Position Inquiry */}
-                <div style={fieldStyle}>
-                    <label style={labelStyle}>Position inquiry *</label>
-                    <div style={{ position: "relative" }}>
-                        <select
-                            value={values.position}
-                            onChange={(e) => set("position", e.target.value)}
-                            onFocus={() => startTransition(() => setFocused("position"))}
-                            onBlur={() => startTransition(() => setFocused(null))}
-                            style={{
-                                ...inputStyle("position"),
-                                cursor: "pointer",
-                                paddingRight: input.paddingH + 28,
-                                color: values.position ? input.textColor : input.placeholderColor,
-                            }}
-                        >
-                            <option value="" disabled hidden>Please select</option>
-                            <option value="General">General</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            style={{
-                                position: "absolute",
-                                right: input.paddingH,
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                pointerEvents: "none",
-                                opacity: 0.5,
-                            }}
-                        >
-                            <path
-                                d="M4 6l4 4 4-4"
-                                stroke={input.textColor}
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                        </svg>
-                    </div>
-                    {errors.position && <span style={errorStyle}>{errors.position}</span>}
-                </div>
-
-                {/* Resume Upload */}
-                <div style={fieldStyle}>
-                    <label style={labelStyle}>Upload resume *</label>
-                    <div
-                        onClick={() => fileInputRef.current?.click()}
-                        onDragOver={(e) => { e.preventDefault(); startTransition(() => setFileHovered(true)) }}
-                        onDragLeave={() => startTransition(() => setFileHovered(false))}
-                        onDrop={handleFileDrop}
-                        style={{
-                            display: "flex",
-                            flexDirection: fileUpload.layout === "vertical" ? "column" : "row",
-                            alignItems: "center",
-                            justifyContent: fileUpload.layout === "vertical" ? "center" : "flex-start",
-                            gap: fileUpload.layout === "vertical" ? 8 : 12,
-                            padding: `${fileUpload.paddingV}px ${fileUpload.paddingH}px`,
-                            textAlign: fileUpload.layout === "vertical" ? "center" : undefined,
-                            background: fileHovered ? `${input.focusBorderColor}10` : input.bg,
-                            border: `1px ${fileHovered ? "dashed" : input.borderStyle} ${errors.resume ? form.errorColor : fileHovered ? input.focusBorderColor : input.borderColor}`,
-                            borderRadius: input.borderRadius,
-                            cursor: "pointer",
-                            transition: "border-color 0.15s ease, background 0.15s ease",
-                            boxSizing: "border-box",
-                        }}
-                    >
-                        <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 20 20"
-                            fill="none"
-                            style={{ flexShrink: 0, opacity: resumeFile ? 0.7 : 0.4 }}
-                        >
-                            <path
-                                d="M10 13V5M10 5L7 8M10 5l3 3"
-                                stroke={resumeFile ? button.bg : input.textColor}
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                            <path
-                                d="M4 16h12"
-                                stroke={resumeFile ? button.bg : input.textColor}
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                            />
-                        </svg>
-                        <span
-                            style={{
-                                ...input.font,
-                                color: resumeFile ? input.textColor : input.placeholderColor,
-                                flex: fileUpload.layout === "vertical" ? undefined : 1,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                            }}
-                        >
-                            {resumeFile ? resumeFile.name : "Click or drag to upload your resume"}
-                        </span>
-                        {resumeFile && (
-                            <span
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleFileChange(null)
-                                    if (fileInputRef.current) fileInputRef.current.value = ""
-                                }}
-                                style={{
-                                    ...input.font,
-                                    color: form.errorColor,
-                                    cursor: "pointer",
-                                    flexShrink: 0,
-                                    opacity: 0.6,
-                                    lineHeight: 1,
-                                }}
-                            >
-                                ✕
-                            </span>
-                        )}
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".pdf,.doc,.docx"
-                            onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
-                            style={{ display: "none" }}
-                        />
-                    </div>
-                    <span style={{ ...errorStyle, color: errors.resume ? form.errorColor : `${input.textColor}55` }}>
-                        {errors.resume ? errors.resume : "PDF, DOC or DOCX · Max 10 MB"}
-                    </span>
-                </div>
-
-                {/* Message (optional) */}
-                <div style={fieldStyle}>
-                    <label style={labelStyle}>Message (optional)</label>
-                    <textarea
-                        placeholder="Anything you'd like to add..."
-                        value={values.message}
-                        onChange={(e) => set("message", e.target.value)}
-                        onFocus={() => startTransition(() => setFocused("message"))}
-                        onBlur={() => startTransition(() => setFocused(null))}
-                        rows={4}
-                        style={{
-                            ...inputStyle("message"),
-                            resize: "vertical",
-                            minHeight: 100,
-                        }}
-                    />
-                </div>
-
-                {/* Consent */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%" }}>
-                    <label
-                        style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: 10,
-                            cursor: "pointer",
-                            justifyContent: alignItems,
-                        }}
-                    >
-                        <span
-                            style={{
-                                flexShrink: 0,
-                                width: checkbox.size,
-                                height: checkbox.size,
-                                marginTop: 2,
-                                borderRadius: checkbox.borderRadius,
-                                border: `1.5px solid ${values.consent ? checkbox.checkedBg : errors.consent ? form.errorColor : input.borderColor}`,
-                                background: values.consent ? checkbox.checkedBg : checkbox.bg,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "all 0.15s ease",
-                            }}
-                        >
-                            {values.consent && (
-                                <svg
-                                    width={checkbox.size * 0.55}
-                                    height={checkbox.size * 0.55}
-                                    viewBox="0 0 10 10"
-                                    fill="none"
-                                >
-                                    <path
-                                        d="M2 5l2.5 2.5L8 3"
-                                        stroke={checkbox.checkColor}
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            )}
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={values.consent}
-                            onChange={(e) => set("consent", e.target.checked)}
-                            style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
-                        />
-                        <span style={{ ...label.font, color: label.color, lineHeight: "1.4" }}>
-                            I agree to receive follow-up communication and occasional updates by email. *
-                        </span>
-                    </label>
-                    {errors.consent && (
-                        <span style={{ ...errorStyle, marginLeft: checkbox.size + 10 }}>
-                            {errors.consent}
-                        </span>
-                    )}
-                </div>
-
-                {/* Submit */}
-                <button
-                    type="submit"
-                    disabled={status === "loading"}
-                    onMouseEnter={() => startTransition(() => setButtonHovered(true))}
-                    onMouseLeave={() => startTransition(() => setButtonHovered(false))}
+                <form
+                    onSubmit={handleSubmit}
+                    noValidate
                     style={{
                         display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                        width: button.width === "fill" ? "100%" : "auto",
-                        padding: `${button.paddingV}px ${button.paddingH}px`,
-                        background: buttonHovered && status !== "loading" ? button.hoverBg : button.bg,
-                        color: button.textColor,
-                        border: "none",
-                        borderRadius: input.borderRadius,
-                        cursor: status === "loading" ? "wait" : "pointer",
-                        opacity: status === "loading" ? 0.7 : 1,
-                        transition: "background 0.15s ease, opacity 0.15s ease",
-                        ...button.font,
+                        flexDirection: "column",
+                        gap: form.gap,
+                        alignItems,
                     }}
                 >
-                    {status === "loading" ? (
-                        <>
+                    {/* Row: First Name + Last Name */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: form.gap, width: "100%" }}>
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>First name *</label>
+                            <input
+                                type="text"
+                                placeholder="John"
+                                value={values.firstName}
+                                onChange={(e) => set("firstName", e.target.value)}
+                                onFocus={() => startTransition(() => setFocused("firstName"))}
+                                onBlur={() => startTransition(() => setFocused(null))}
+                                style={inputStyle("firstName")}
+                            />
+                            {errors.firstName && <span style={errorStyle}>{errors.firstName}</span>}
+                        </div>
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>Last name *</label>
+                            <input
+                                type="text"
+                                placeholder="Doe"
+                                value={values.lastName}
+                                onChange={(e) => set("lastName", e.target.value)}
+                                onFocus={() => startTransition(() => setFocused("lastName"))}
+                                onBlur={() => startTransition(() => setFocused(null))}
+                                style={inputStyle("lastName")}
+                            />
+                            {errors.lastName && <span style={errorStyle}>{errors.lastName}</span>}
+                        </div>
+                    </div>
+
+                    {/* Email */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>Email address *</label>
+                        <input
+                            type="email"
+                            placeholder="example@example.com"
+                            value={values.email}
+                            onChange={(e) => set("email", e.target.value)}
+                            onFocus={() => startTransition(() => setFocused("email"))}
+                            onBlur={() => startTransition(() => setFocused(null))}
+                            style={inputStyle("email")}
+                        />
+                        {errors.email && <span style={errorStyle}>{errors.email}</span>}
+                    </div>
+
+                    {/* Position Inquiry */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>Position inquiry *</label>
+                        <div style={{ position: "relative" }}>
+                            <select
+                                value={values.position}
+                                onChange={(e) => set("position", e.target.value)}
+                                onFocus={() => startTransition(() => setFocused("position"))}
+                                onBlur={() => startTransition(() => setFocused(null))}
+                                style={{
+                                    ...inputStyle("position"),
+                                    cursor: "pointer",
+                                    paddingRight: input.paddingH + 28,
+                                    color: values.position ? input.textColor : input.placeholderColor,
+                                }}
+                            >
+                                <option value="" disabled hidden>Please select</option>
+                                <option value="General">General</option>
+                                <option value="Other">Other</option>
+                            </select>
                             <svg
                                 width="16"
                                 height="16"
                                 viewBox="0 0 16 16"
                                 fill="none"
-                                style={{ animation: "jfc-spin 0.8s linear infinite" }}
+                                style={{
+                                    position: "absolute",
+                                    right: input.paddingH,
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    pointerEvents: "none",
+                                    opacity: 0.5,
+                                }}
                             >
-                                <circle cx="8" cy="8" r="6" stroke={button.textColor} strokeWidth="2" strokeOpacity="0.3" />
-                                <path d="M8 2a6 6 0 0 1 6 6" stroke={button.textColor} strokeWidth="2" strokeLinecap="round" />
+                                <path
+                                    d="M4 6l4 4 4-4"
+                                    stroke={input.textColor}
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
                             </svg>
-                            <style>{`@keyframes jfc-spin { to { transform: rotate(360deg); } }`}</style>
-                            Sending…
-                        </>
-                    ) : status === "error" ? (
-                        "Something went wrong — try again"
-                    ) : (
-                        submitButtonText
-                    )}
-                </button>
+                        </div>
+                        {errors.position && <span style={errorStyle}>{errors.position}</span>}
+                    </div>
 
-            </form>
-        </div>
+                    {/* Resume Upload */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>Upload resume *</label>
+                        <div
+                            onClick={() => fileInputRef.current?.click()}
+                            onDragOver={(e) => { e.preventDefault(); startTransition(() => setFileHovered(true)) }}
+                            onDragLeave={() => startTransition(() => setFileHovered(false))}
+                            onDrop={handleFileDrop}
+                            style={{
+                                display: "flex",
+                                flexDirection: fileUpload.layout === "vertical" ? "column" : "row",
+                                alignItems: "center",
+                                justifyContent: fileUpload.layout === "vertical" ? "center" : "flex-start",
+                                gap: fileUpload.layout === "vertical" ? 8 : 12,
+                                padding: `${fileUpload.paddingV}px ${fileUpload.paddingH}px`,
+                                textAlign: fileUpload.layout === "vertical" ? "center" : undefined,
+                                background: fileHovered ? `${input.focusBorderColor}10` : input.bg,
+                                border: `1px ${fileHovered ? "dashed" : fileUpload.borderStyle} ${errors.resume ? form.errorColor : fileHovered ? input.focusBorderColor : input.borderColor}`,
+                                borderRadius: input.borderRadius,
+                                cursor: "pointer",
+                                transition: "border-color 0.15s ease, background 0.15s ease",
+                                boxSizing: "border-box",
+                            }}
+                        >
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                style={{ flexShrink: 0, opacity: resumeFile ? 0.7 : 0.4 }}
+                            >
+                                <path
+                                    d="M10 13V5M10 5L7 8M10 5l3 3"
+                                    stroke={resumeFile ? button.bg : input.textColor}
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                                <path
+                                    d="M4 16h12"
+                                    stroke={resumeFile ? button.bg : input.textColor}
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                            <span
+                                style={{
+                                    ...input.font,
+                                    color: resumeFile ? input.textColor : input.placeholderColor,
+                                    flex: fileUpload.layout === "vertical" ? undefined : 1,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                {resumeFile ? resumeFile.name : "Click or drag to upload your resume"}
+                            </span>
+                            {resumeFile && (
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleFileChange(null)
+                                        if (fileInputRef.current) fileInputRef.current.value = ""
+                                    }}
+                                    style={{
+                                        ...input.font,
+                                        color: form.errorColor,
+                                        cursor: "pointer",
+                                        flexShrink: 0,
+                                        opacity: 0.6,
+                                        lineHeight: 1,
+                                    }}
+                                >
+                                    ✕
+                                </span>
+                            )}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+                                style={{ display: "none" }}
+                            />
+                        </div>
+                        {errors.resume ? (
+                            <span style={errorStyle}>{errors.resume}</span>
+                        ) : (
+                            <span style={captionStyle}>PDF, DOC or DOCX · Max 10 MB</span>
+                        )}
+                    </div>
+
+                    {/* Message (optional) */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>Message (optional)</label>
+                        <textarea
+                            placeholder="Anything you'd like to add..."
+                            value={values.message}
+                            onChange={(e) => set("message", e.target.value)}
+                            onFocus={() => startTransition(() => setFocused("message"))}
+                            onBlur={() => startTransition(() => setFocused(null))}
+                            rows={4}
+                            style={{
+                                ...inputStyle("message"),
+                                resize: "vertical",
+                                minHeight: 100,
+                            }}
+                        />
+                    </div>
+
+                    {/* Consent */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%" }}>
+                        <label
+                            style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 10,
+                                cursor: "pointer",
+                                justifyContent: alignItems,
+                            }}
+                        >
+                            <span
+                                style={{
+                                    flexShrink: 0,
+                                    width: checkbox.size,
+                                    height: checkbox.size,
+                                    marginTop: 2,
+                                    borderRadius: checkbox.borderRadius,
+                                    border: `1.5px solid ${values.consent ? checkbox.checkedBg : errors.consent ? form.errorColor : input.borderColor}`,
+                                    background: values.consent ? checkbox.checkedBg : checkbox.bg,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    transition: "all 0.15s ease",
+                                }}
+                            >
+                                {values.consent && (
+                                    <svg
+                                        width={checkbox.size * 0.55}
+                                        height={checkbox.size * 0.55}
+                                        viewBox="0 0 10 10"
+                                        fill="none"
+                                    >
+                                        <path
+                                            d="M2 5l2.5 2.5L8 3"
+                                            stroke={checkbox.checkColor}
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                )}
+                            </span>
+                            <input
+                                type="checkbox"
+                                checked={values.consent}
+                                onChange={(e) => set("consent", e.target.checked)}
+                                style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
+                            />
+                            <span style={{ ...checkbox.font, color: checkbox.textColor, lineHeight: "1.4" }}>
+                                I agree to receive follow-up communication and occasional updates by email. *
+                            </span>
+                        </label>
+                        {errors.consent && (
+                            <span style={{ ...errorStyle, marginLeft: checkbox.size + 10 }}>
+                                {errors.consent}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Submit */}
+                    <button
+                        type="submit"
+                        disabled={status === "loading"}
+                        onMouseEnter={() => startTransition(() => setButtonHovered(true))}
+                        onMouseLeave={() => startTransition(() => setButtonHovered(false))}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 8,
+                            width: button.width === "fill" ? "100%" : "auto",
+                            padding: `${button.paddingV}px ${button.paddingH}px`,
+                            background: buttonBg,
+                            filter: buttonFilter,
+                            color: button.textColor,
+                            border: button.borderWidth > 0
+                                ? `${button.borderWidth}px solid ${button.borderColor}`
+                                : "none",
+                            borderRadius: button.borderRadius,
+                            cursor: status === "loading" ? "wait" : "pointer",
+                            opacity: status === "loading" ? 0.7 : 1,
+                            transition: "background 0.15s ease, filter 0.15s ease, opacity 0.15s ease",
+                            ...button.font,
+                        }}
+                    >
+                        {status === "loading" ? (
+                            <>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 16 16"
+                                    fill="none"
+                                    style={{ animation: "jfca-spin 0.8s linear infinite" }}
+                                >
+                                    <circle cx="8" cy="8" r="6" stroke={button.textColor} strokeWidth="2" strokeOpacity="0.3" />
+                                    <path d="M8 2a6 6 0 0 1 6 6" stroke={button.textColor} strokeWidth="2" strokeLinecap="round" />
+                                </svg>
+                                <style>{`@keyframes jfca-spin { to { transform: rotate(360deg); } }`}</style>
+                                Sending…
+                            </>
+                        ) : status === "error" ? (
+                            "Something went wrong — try again"
+                        ) : (
+                            submitButtonText
+                        )}
+                    </button>
+
+                </form>
+            </div>
+        </>
     )
 }
 
@@ -523,7 +556,6 @@ interface InputProps {
     font: Record<string, any>
     bg: string
     borderColor: string
-    borderStyle: "solid" | "dashed" | "dotted"
     focusBorderColor: string
     textColor: string
     placeholderColor: string
@@ -540,6 +572,13 @@ interface ButtonProps {
     width: "fill" | "fit"
     paddingV: number
     paddingH: number
+    borderRadius: number
+    borderColor: string
+    borderWidth: number
+    useGradient: boolean
+    gradientFrom: string
+    gradientTo: string
+    gradientAngle: number
 }
 
 interface CheckboxProps {
@@ -548,12 +587,20 @@ interface CheckboxProps {
     bg: string
     checkedBg: string
     checkColor: string
+    font: Record<string, any>
+    textColor: string
 }
 
 interface FileUploadProps {
     layout: "horizontal" | "vertical"
     paddingV: number
     paddingH: number
+    borderStyle: "solid" | "dashed" | "dotted"
+}
+
+interface CaptionProps {
+    font: Record<string, any>
+    color: string
 }
 
 interface LabelProps {
@@ -574,6 +621,7 @@ interface Props {
     button: ButtonProps
     checkbox: CheckboxProps
     fileUpload: FileUploadProps
+    caption: CaptionProps
     label: LabelProps
     form: FormProps
     submitButtonText: string
@@ -605,14 +653,6 @@ addPropertyControls(JotFormCareer, {
                 defaultValue: "rgba(0,0,0,0.15)",
                 title: "Border Color",
             },
-            borderStyle: {
-                type: ControlType.Enum,
-                options: ["solid", "dashed", "dotted"],
-                optionTitles: ["Solid", "Dashed", "Dotted"],
-                displaySegmentedControl: true,
-                defaultValue: "solid",
-                title: "Border Style",
-            },
             focusBorderColor: {
                 type: ControlType.Color,
                 defaultValue: "rgba(0,0,0,0.6)",
@@ -641,7 +681,7 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Number,
                 defaultValue: 11,
                 min: 4,
-                max: 32,
+                max: 64,
                 step: 1,
                 displayStepper: true,
                 title: "Padding V",
@@ -650,7 +690,7 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Number,
                 defaultValue: 14,
                 min: 4,
-                max: 48,
+                max: 64,
                 step: 1,
                 displayStepper: true,
                 title: "Padding H",
@@ -673,11 +713,13 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Color,
                 defaultValue: "#111111",
                 title: "Background",
+                hidden: (props) => props.button?.useGradient,
             },
             hoverBg: {
                 type: ControlType.Color,
                 defaultValue: "#333333",
                 title: "Hover BG",
+                hidden: (props) => props.button?.useGradient,
             },
             textColor: {
                 type: ControlType.Color,
@@ -696,7 +738,7 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Number,
                 defaultValue: 14,
                 min: 4,
-                max: 32,
+                max: 64,
                 step: 1,
                 displayStepper: true,
                 title: "Padding V",
@@ -705,10 +747,59 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Number,
                 defaultValue: 24,
                 min: 4,
-                max: 64,
+                max: 96,
                 step: 1,
                 displayStepper: true,
                 title: "Padding H",
+            },
+            borderRadius: {
+                type: ControlType.Number,
+                defaultValue: 8,
+                min: 0,
+                max: 100,
+                step: 1,
+                displayStepper: true,
+                title: "Radius",
+            },
+            borderColor: {
+                type: ControlType.Color,
+                defaultValue: "transparent",
+                title: "Border Color",
+            },
+            borderWidth: {
+                type: ControlType.Number,
+                defaultValue: 0,
+                min: 0,
+                max: 8,
+                step: 1,
+                displayStepper: true,
+                title: "Border Width",
+            },
+            useGradient: {
+                type: ControlType.Boolean,
+                defaultValue: false,
+                title: "Gradient",
+            },
+            gradientFrom: {
+                type: ControlType.Color,
+                defaultValue: "#111111",
+                title: "Gradient From",
+                hidden: (props) => !props.button?.useGradient,
+            },
+            gradientTo: {
+                type: ControlType.Color,
+                defaultValue: "#555555",
+                title: "Gradient To",
+                hidden: (props) => !props.button?.useGradient,
+            },
+            gradientAngle: {
+                type: ControlType.Number,
+                defaultValue: 135,
+                min: 0,
+                max: 360,
+                step: 5,
+                title: "Gradient Angle",
+                hidden: (props) => !props.button?.useGradient,
             },
         },
     },
@@ -750,6 +841,18 @@ addPropertyControls(JotFormCareer, {
                 defaultValue: "#ffffff",
                 title: "Check Mark",
             },
+            font: {
+                type: ControlType.Font,
+                controls: "extended",
+                defaultFontType: "sans-serif",
+                defaultValue: { fontSize: "14px", variant: "Regular", lineHeight: "1.4em" },
+                title: "Label Font",
+            },
+            textColor: {
+                type: ControlType.Color,
+                defaultValue: "rgba(0,0,0,0.7)",
+                title: "Label Color",
+            },
         },
     },
 
@@ -765,11 +868,19 @@ addPropertyControls(JotFormCareer, {
                 defaultValue: "horizontal",
                 title: "Layout",
             },
+            borderStyle: {
+                type: ControlType.Enum,
+                options: ["solid", "dashed", "dotted"],
+                optionTitles: ["Solid", "Dashed", "Dotted"],
+                displaySegmentedControl: true,
+                defaultValue: "dashed",
+                title: "Border Style",
+            },
             paddingV: {
                 type: ControlType.Number,
                 defaultValue: 16,
                 min: 4,
-                max: 48,
+                max: 200,
                 step: 1,
                 displayStepper: true,
                 title: "Padding V",
@@ -778,10 +889,29 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Number,
                 defaultValue: 16,
                 min: 4,
-                max: 48,
+                max: 200,
                 step: 1,
                 displayStepper: true,
                 title: "Padding H",
+            },
+        },
+    },
+
+    caption: {
+        type: ControlType.Object,
+        title: "Caption",
+        controls: {
+            font: {
+                type: ControlType.Font,
+                controls: "extended",
+                defaultFontType: "sans-serif",
+                defaultValue: { fontSize: "12px", variant: "Regular", lineHeight: "1.4em" },
+                title: "Font",
+            },
+            color: {
+                type: ControlType.Color,
+                defaultValue: "rgba(0,0,0,0.35)",
+                title: "Color",
             },
         },
     },
