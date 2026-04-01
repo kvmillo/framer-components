@@ -2,10 +2,8 @@ import { addPropertyControls, ControlType } from "framer"
 import { useState, startTransition, type CSSProperties } from "react"
 
 /**
- * Custom styled Contact Us form that submits to JotForm (ID: 260886337622060).
- *
- * Fields: First Name, Last Name, Email, Inquiry Type (dropdown),
- * Message (textarea), Consent checkbox, Submit button.
+ * Reusable styled form that submits to any JotForm.
+ * Configure Form ID and field mappings in the "Form Source" panel.
  *
  * @framerDisableUnlink
  * @framerIntrinsicWidth 560
@@ -16,6 +14,29 @@ import { useState, startTransition, type CSSProperties } from "react"
 export default function JotFormContact(props: Props) {
     const {
         style,
+        // Form source
+        formId,
+        fieldFirstName,
+        fieldLastName,
+        fieldEmail,
+        fieldInquiryType,
+        fieldMessage,
+        fieldConsent,
+        consentValue,
+        dropdownOptions,
+        dropdownPlaceholder,
+        // Labels
+        labelFirstName,
+        labelLastName,
+        labelEmail,
+        labelInquiryType,
+        labelMessage,
+        labelConsent,
+        placeholderFirstName,
+        placeholderLastName,
+        placeholderEmail,
+        placeholderMessage,
+        // Styling
         labelFont,
         inputFont,
         buttonFont,
@@ -58,9 +79,9 @@ export default function JotFormContact(props: Props) {
         if (!values.lastName.trim()) e.lastName = "Required"
         if (!values.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
             e.email = "Enter a valid email address"
-        if (!values.inquiryType) e.inquiryType = "Required"
+        if (fieldInquiryType && !values.inquiryType) e.inquiryType = "Required"
         if (!values.message.trim()) e.message = "Required"
-        if (!values.consent) e.consent = "You must agree to continue"
+        if (fieldConsent && !values.consent) e.consent = "You must agree to continue"
         return e
     }
 
@@ -72,23 +93,21 @@ export default function JotFormContact(props: Props) {
 
         startTransition(() => setStatus("loading"))
 
+        const id = formId.trim()
         const data = new FormData()
-        data.append("formID", "260886337622060")
-        data.append("q2_q2_fullname0[first]", values.firstName)
-        data.append("q2_q2_fullname0[last]", "")
-        data.append("q3_q3_fullname1[first]", "")
-        data.append("q3_q3_fullname1[last]", values.lastName)
-        data.append("q4_q4_email2", values.email)
-        data.append("q5_q5_dropdown3", values.inquiryType)
-        data.append("q6_q6_textarea4", values.message)
-        if (values.consent) data.append("q7_q7_checkbox5[]", "I agree")
-        data.append("simple_spc", "260886337622060-260886337622060")
+        data.append("formID", id)
+        if (fieldFirstName) data.append(fieldFirstName, values.firstName)
+        if (fieldLastName) data.append(fieldLastName, values.lastName)
+        if (fieldEmail) data.append(fieldEmail, values.email)
+        if (fieldInquiryType) data.append(fieldInquiryType, values.inquiryType)
+        if (fieldMessage) data.append(fieldMessage, values.message)
+        if (fieldConsent && values.consent) data.append(fieldConsent, consentValue)
+        data.append("simple_spc", `${id}-${id}`)
         data.append("submitSource", "embed")
         data.append("submitDate", new Date().toISOString())
-        data.append("buildDate", "1774905042321")
 
         try {
-            await fetch("https://submit.jotform.com/submit/260886337622060", {
+            await fetch(`https://submit.jotform.com/submit/${id}`, {
                 method: "POST",
                 body: data,
                 mode: "no-cors",
@@ -120,7 +139,6 @@ export default function JotFormContact(props: Props) {
         outline: "none",
         transition: "border-color 0.15s ease",
         ...inputFont,
-        // reset browser defaults
         WebkitAppearance: "none",
         appearance: "none",
     })
@@ -179,6 +197,11 @@ export default function JotFormContact(props: Props) {
 
     // ─── Main form ────────────────────────────────────────────────────────────
 
+    // Build dropdown option list from ControlType.Array items
+    const options: string[] = Array.isArray(dropdownOptions)
+        ? dropdownOptions.map((o: any) => (typeof o === "string" ? o : o?.value ?? "")).filter(Boolean)
+        : []
+
     return (
         <div
             style={{
@@ -194,26 +217,23 @@ export default function JotFormContact(props: Props) {
                 {/* Row: First Name + Last Name */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: formGap }}>
                     <div style={fieldStyle}>
-                        <label style={labelStyle}>First name *</label>
+                        <label style={labelStyle}>{labelFirstName} *</label>
                         <input
                             type="text"
-                            placeholder="John"
+                            placeholder={placeholderFirstName}
                             value={values.firstName}
                             onChange={(e) => set("firstName", e.target.value)}
                             onFocus={() => startTransition(() => setFocused("firstName"))}
                             onBlur={() => startTransition(() => setFocused(null))}
-                            style={{
-                                ...inputStyle("firstName"),
-                                "::placeholder": { color: placeholderColor } as any,
-                            }}
+                            style={inputStyle("firstName")}
                         />
                         {errors.firstName && <span style={errorStyle}>{errors.firstName}</span>}
                     </div>
                     <div style={fieldStyle}>
-                        <label style={labelStyle}>Last name *</label>
+                        <label style={labelStyle}>{labelLastName} *</label>
                         <input
                             type="text"
-                            placeholder="Doe"
+                            placeholder={placeholderLastName}
                             value={values.lastName}
                             onChange={(e) => set("lastName", e.target.value)}
                             onFocus={() => startTransition(() => setFocused("lastName"))}
@@ -226,10 +246,10 @@ export default function JotFormContact(props: Props) {
 
                 {/* Email */}
                 <div style={fieldStyle}>
-                    <label style={labelStyle}>Email address *</label>
+                    <label style={labelStyle}>{labelEmail} *</label>
                     <input
                         type="email"
-                        placeholder="example@example.com"
+                        placeholder={placeholderEmail}
                         value={values.email}
                         onChange={(e) => set("email", e.target.value)}
                         onFocus={() => startTransition(() => setFocused("email"))}
@@ -239,61 +259,60 @@ export default function JotFormContact(props: Props) {
                     {errors.email && <span style={errorStyle}>{errors.email}</span>}
                 </div>
 
-                {/* Inquiry Type */}
-                <div style={fieldStyle}>
-                    <label style={labelStyle}>Inquiry type *</label>
-                    <div style={{ position: "relative" }}>
-                        <select
-                            value={values.inquiryType}
-                            onChange={(e) => set("inquiryType", e.target.value)}
-                            onFocus={() => startTransition(() => setFocused("inquiryType"))}
-                            onBlur={() => startTransition(() => setFocused(null))}
-                            style={{
-                                ...inputStyle("inquiryType"),
-                                cursor: "pointer",
-                                paddingRight: inputPaddingH + 28,
-                                color: values.inquiryType ? inputTextColor : placeholderColor,
-                            }}
-                        >
-                            <option value="" disabled hidden>Please select</option>
-                            <option value="General Question">General Question</option>
-                            <option value="Support">Support</option>
-                            <option value="Feedback">Feedback</option>
-                            <option value="Partnership">Partnership</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        {/* Chevron icon */}
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            style={{
-                                position: "absolute",
-                                right: inputPaddingH,
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                pointerEvents: "none",
-                                opacity: 0.5,
-                            }}
-                        >
-                            <path
-                                d="M4 6l4 4 4-4"
-                                stroke={inputTextColor}
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                        </svg>
+                {/* Inquiry Type — only rendered when a field name is set */}
+                {fieldInquiryType && options.length > 0 && (
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>{labelInquiryType} *</label>
+                        <div style={{ position: "relative" }}>
+                            <select
+                                value={values.inquiryType}
+                                onChange={(e) => set("inquiryType", e.target.value)}
+                                onFocus={() => startTransition(() => setFocused("inquiryType"))}
+                                onBlur={() => startTransition(() => setFocused(null))}
+                                style={{
+                                    ...inputStyle("inquiryType"),
+                                    cursor: "pointer",
+                                    paddingRight: inputPaddingH + 28,
+                                    color: values.inquiryType ? inputTextColor : placeholderColor,
+                                }}
+                            >
+                                <option value="" disabled hidden>{dropdownPlaceholder}</option>
+                                {options.map((opt) => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                            </select>
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                style={{
+                                    position: "absolute",
+                                    right: inputPaddingH,
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    pointerEvents: "none",
+                                    opacity: 0.5,
+                                }}
+                            >
+                                <path
+                                    d="M4 6l4 4 4-4"
+                                    stroke={inputTextColor}
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                        </div>
+                        {errors.inquiryType && <span style={errorStyle}>{errors.inquiryType}</span>}
                     </div>
-                    {errors.inquiryType && <span style={errorStyle}>{errors.inquiryType}</span>}
-                </div>
+                )}
 
                 {/* Message */}
                 <div style={fieldStyle}>
-                    <label style={labelStyle}>What's on your mind? *</label>
+                    <label style={labelStyle}>{labelMessage} *</label>
                     <textarea
-                        placeholder="Tell us more..."
+                        placeholder={placeholderMessage}
                         value={values.message}
                         onChange={(e) => set("message", e.target.value)}
                         onFocus={() => startTransition(() => setFocused("message"))}
@@ -308,56 +327,50 @@ export default function JotFormContact(props: Props) {
                     {errors.message && <span style={errorStyle}>{errors.message}</span>}
                 </div>
 
-                {/* Consent */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <label
-                        style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: 10,
-                            cursor: "pointer",
-                        }}
-                    >
-                        {/* Custom checkbox */}
-                        <span
-                            style={{
-                                flexShrink: 0,
-                                width: 18,
-                                height: 18,
-                                marginTop: 1,
-                                borderRadius: Math.min(borderRadius as number, 4),
-                                border: `1.5px solid ${values.consent ? buttonBg : errors.consent ? errorColor : inputBorderColor}`,
-                                background: values.consent ? buttonBg : inputBg,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "all 0.15s ease",
-                            }}
-                        >
-                            {values.consent && (
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                    <path
-                                        d="M2 5l2.5 2.5L8 3"
-                                        stroke={buttonTextColor}
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            )}
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={values.consent}
-                            onChange={(e) => set("consent", e.target.checked)}
-                            style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
-                        />
-                        <span style={{ ...labelFont, color: labelColor, lineHeight: "1.4" }}>
-                            I agree to receive follow-up communication and occasional updates by email. *
-                        </span>
-                    </label>
-                    {errors.consent && <span style={{ ...errorStyle, marginLeft: 28 }}>{errors.consent}</span>}
-                </div>
+                {/* Consent — only rendered when a field name is set */}
+                {fieldConsent && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                            <span
+                                style={{
+                                    flexShrink: 0,
+                                    width: 18,
+                                    height: 18,
+                                    marginTop: 1,
+                                    borderRadius: Math.min(borderRadius as number, 4),
+                                    border: `1.5px solid ${values.consent ? buttonBg : errors.consent ? errorColor : inputBorderColor}`,
+                                    background: values.consent ? buttonBg : inputBg,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    transition: "all 0.15s ease",
+                                }}
+                            >
+                                {values.consent && (
+                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                        <path
+                                            d="M2 5l2.5 2.5L8 3"
+                                            stroke={buttonTextColor}
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                )}
+                            </span>
+                            <input
+                                type="checkbox"
+                                checked={values.consent}
+                                onChange={(e) => set("consent", e.target.checked)}
+                                style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
+                            />
+                            <span style={{ ...labelFont, color: labelColor, lineHeight: "1.4" }}>
+                                {labelConsent} *
+                            </span>
+                        </label>
+                        {errors.consent && <span style={{ ...errorStyle, marginLeft: 28 }}>{errors.consent}</span>}
+                    </div>
+                )}
 
                 {/* Submit */}
                 <button
@@ -413,6 +426,29 @@ export default function JotFormContact(props: Props) {
 
 interface Props {
     style?: CSSProperties
+    // Form source
+    formId: string
+    fieldFirstName: string
+    fieldLastName: string
+    fieldEmail: string
+    fieldInquiryType: string
+    fieldMessage: string
+    fieldConsent: string
+    consentValue: string
+    dropdownOptions: string[]
+    dropdownPlaceholder: string
+    // Labels
+    labelFirstName: string
+    labelLastName: string
+    labelEmail: string
+    labelInquiryType: string
+    labelMessage: string
+    labelConsent: string
+    placeholderFirstName: string
+    placeholderLastName: string
+    placeholderEmail: string
+    placeholderMessage: string
+    // Styling
     labelFont: Record<string, any>
     inputFont: Record<string, any>
     buttonFont: Record<string, any>
@@ -439,7 +475,122 @@ interface Props {
 // ─── Property Controls ────────────────────────────────────────────────────────
 
 addPropertyControls(JotFormContact, {
-    // Typography
+
+    // ── Form Source ───────────────────────────────────────────────────────────
+    formId: {
+        type: ControlType.String,
+        defaultValue: "260886337622060",
+        title: "Form ID",
+        description: "Your JotForm form ID (from the form URL).",
+    },
+    fieldFirstName: {
+        type: ControlType.String,
+        defaultValue: "q2_q2_fullname0[first]",
+        title: "First Name Field",
+    },
+    fieldLastName: {
+        type: ControlType.String,
+        defaultValue: "q3_q3_fullname1[last]",
+        title: "Last Name Field",
+    },
+    fieldEmail: {
+        type: ControlType.String,
+        defaultValue: "q4_q4_email2",
+        title: "Email Field",
+    },
+    fieldInquiryType: {
+        type: ControlType.String,
+        defaultValue: "q5_q5_dropdown3",
+        title: "Dropdown Field",
+        description: "Leave empty to hide the dropdown.",
+    },
+    dropdownOptions: {
+        type: ControlType.Array,
+        control: { type: ControlType.String },
+        defaultValue: ["General Question", "Support", "Feedback", "Partnership", "Other"],
+        title: "Dropdown Options",
+        hidden: (props) => !props.fieldInquiryType,
+    },
+    dropdownPlaceholder: {
+        type: ControlType.String,
+        defaultValue: "Please select",
+        title: "Dropdown Placeholder",
+        hidden: (props) => !props.fieldInquiryType,
+    },
+    fieldMessage: {
+        type: ControlType.String,
+        defaultValue: "q6_q6_textarea4",
+        title: "Message Field",
+    },
+    fieldConsent: {
+        type: ControlType.String,
+        defaultValue: "q7_q7_checkbox5[]",
+        title: "Consent Field",
+        description: "Leave empty to hide the consent checkbox.",
+    },
+    consentValue: {
+        type: ControlType.String,
+        defaultValue: "I agree",
+        title: "Consent Value",
+        description: "Value sent to JotForm when checked.",
+        hidden: (props) => !props.fieldConsent,
+    },
+
+    // ── Field Labels & Placeholders ───────────────────────────────────────────
+    labelFirstName: {
+        type: ControlType.String,
+        defaultValue: "First name",
+        title: "Label: First Name",
+    },
+    placeholderFirstName: {
+        type: ControlType.String,
+        defaultValue: "John",
+        title: "Placeholder: First Name",
+    },
+    labelLastName: {
+        type: ControlType.String,
+        defaultValue: "Last name",
+        title: "Label: Last Name",
+    },
+    placeholderLastName: {
+        type: ControlType.String,
+        defaultValue: "Doe",
+        title: "Placeholder: Last Name",
+    },
+    labelEmail: {
+        type: ControlType.String,
+        defaultValue: "Email address",
+        title: "Label: Email",
+    },
+    placeholderEmail: {
+        type: ControlType.String,
+        defaultValue: "example@example.com",
+        title: "Placeholder: Email",
+    },
+    labelInquiryType: {
+        type: ControlType.String,
+        defaultValue: "Inquiry type",
+        title: "Label: Dropdown",
+        hidden: (props) => !props.fieldInquiryType,
+    },
+    labelMessage: {
+        type: ControlType.String,
+        defaultValue: "What's on your mind?",
+        title: "Label: Message",
+    },
+    placeholderMessage: {
+        type: ControlType.String,
+        defaultValue: "Tell us more…",
+        title: "Placeholder: Message",
+    },
+    labelConsent: {
+        type: ControlType.String,
+        defaultValue: "I agree to receive follow-up communication and occasional updates by email.",
+        title: "Label: Consent",
+        hidden: (props) => !props.fieldConsent,
+    },
+
+    // ── Typography ────────────────────────────────────────────────────────────
     labelFont: {
         type: ControlType.Font,
         controls: "extended",
@@ -462,7 +613,7 @@ addPropertyControls(JotFormContact, {
         title: "Button Font",
     },
 
-    // Colors
+    // ── Colors ────────────────────────────────────────────────────────────────
     labelColor: {
         type: ControlType.Color,
         defaultValue: "rgba(0,0,0,0.7)",
@@ -519,7 +670,7 @@ addPropertyControls(JotFormContact, {
         title: "Error Color",
     },
 
-    // Spacing & shape
+    // ── Spacing & Shape ───────────────────────────────────────────────────────
     borderRadius: {
         type: ControlType.Number,
         defaultValue: 8,
@@ -557,7 +708,7 @@ addPropertyControls(JotFormContact, {
         title: "Field Gap",
     },
 
-    // Content
+    // ── Content ───────────────────────────────────────────────────────────────
     submitButtonText: {
         type: ControlType.String,
         defaultValue: "Submit inquiry",
