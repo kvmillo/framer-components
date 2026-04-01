@@ -358,7 +358,7 @@ export default function JotFormCareer(props: Props) {
                                     src={fileUpload.icon}
                                     width={fileUpload.iconSize}
                                     height={fileUpload.iconSize}
-                                    style={{ flexShrink: 0, objectFit: "contain", opacity: resumeFile ? 0.7 : 0.4 }}
+                                    style={{ flexShrink: 0, objectFit: "contain", opacity: fileUpload.iconOpacity }}
                                     alt=""
                                 />
                             ) : (
@@ -367,7 +367,7 @@ export default function JotFormCareer(props: Props) {
                                     height={fileUpload.iconSize}
                                     viewBox="0 0 20 20"
                                     fill="none"
-                                    style={{ flexShrink: 0, opacity: resumeFile ? 0.7 : 0.4 }}
+                                    style={{ flexShrink: 0, opacity: fileUpload.iconOpacity }}
                                 >
                                     <path
                                         d="M10 13V5M10 5L7 8M10 5l3 3"
@@ -628,6 +628,7 @@ interface FileUploadProps {
     paddingH: number
     borderStyle: "solid" | "dashed" | "dotted"
     iconSize: number
+    iconOpacity: number
     icon: string
 }
 
@@ -939,6 +940,15 @@ addPropertyControls(JotFormCareer, {
                 step: 1,
                 displayStepper: true,
                 title: "Icon Size",
+            },
+            iconOpacity: {
+                type: ControlType.Number,
+                defaultValue: 0.4,
+                min: 0,
+                max: 1,
+                step: 0.05,
+                displayStepper: true,
+                title: "Icon Opacity",
             },
             paddingV: {
                 type: ControlType.Number,
