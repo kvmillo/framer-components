@@ -7,7 +7,6 @@ import { useState, startTransition, type CSSProperties } from "react"
  * Fields: First Name, Last Name, Email, Inquiry Type (dropdown),
  * Message (textarea), Consent checkbox, Submit button.
  *
- * @framerDisableUnlink
  * @framerIntrinsicWidth 560
  * @framerIntrinsicHeight 680
  * @framerSupportedLayoutWidth any-prefer-fixed
