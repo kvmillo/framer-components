@@ -19,6 +19,7 @@ export default function JotFormContact(props: Props) {
         input,
         button,
         label,
+        checkbox,
         form,
         submitButtonText,
         showSuccessMessage,
@@ -92,6 +93,12 @@ export default function JotFormContact(props: Props) {
         })
     }
 
+    // ─── Alignment helpers ────────────────────────────────────────────────────
+
+    const alignItems =
+        form.align === "center" ? "center" : form.align === "right" ? "flex-end" : "flex-start"
+    const textAlign = form.align as CSSProperties["textAlign"]
+
     // ─── Shared style helpers ─────────────────────────────────────────────────
 
     const inputStyle = (field: string): CSSProperties => ({
@@ -99,7 +106,7 @@ export default function JotFormContact(props: Props) {
         width: "100%",
         boxSizing: "border-box",
         background: input.bg,
-        border: `1px solid ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
+        border: `1px ${input.borderStyle} ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
         borderRadius: input.borderRadius,
         padding: `${input.paddingV}px ${input.paddingH}px`,
         color: input.textColor,
@@ -114,6 +121,7 @@ export default function JotFormContact(props: Props) {
         display: "block",
         marginBottom: 6,
         color: label.color,
+        textAlign,
         ...label.font,
     }
 
@@ -121,11 +129,12 @@ export default function JotFormContact(props: Props) {
         marginTop: 4,
         fontSize: 12,
         color: form.errorColor,
+        textAlign,
         ...label.font,
         fontWeight: 400,
     }
 
-    const fieldStyle: CSSProperties = { display: "flex", flexDirection: "column" }
+    const fieldStyle: CSSProperties = { display: "flex", flexDirection: "column", width: "100%" }
 
     // ─── Success state ────────────────────────────────────────────────────────
 
@@ -174,10 +183,18 @@ export default function JotFormContact(props: Props) {
                 ...style,
             }}
         >
-            <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: form.gap }}>
-
+            <form
+                onSubmit={handleSubmit}
+                noValidate
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: form.gap,
+                    alignItems,
+                }}
+            >
                 {/* Row: First Name + Last Name */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: form.gap }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: form.gap, width: "100%" }}>
                     <div style={fieldStyle}>
                         <label style={labelStyle}>First name *</label>
                         <input
@@ -290,17 +307,25 @@ export default function JotFormContact(props: Props) {
                 </div>
 
                 {/* Consent */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%" }}>
+                    <label
+                        style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 10,
+                            cursor: "pointer",
+                            justifyContent: alignItems,
+                        }}
+                    >
                         <span
                             style={{
                                 flexShrink: 0,
-                                width: 18,
-                                height: 18,
-                                marginTop: 1,
-                                borderRadius: Math.min(input.borderRadius as number, 4),
-                                border: `1.5px solid ${values.consent ? button.bg : errors.consent ? form.errorColor : input.borderColor}`,
-                                background: values.consent ? button.bg : input.bg,
+                                width: checkbox.size,
+                                height: checkbox.size,
+                                marginTop: 2,
+                                borderRadius: checkbox.borderRadius,
+                                border: `1.5px solid ${values.consent ? checkbox.checkedBg : errors.consent ? form.errorColor : input.borderColor}`,
+                                background: values.consent ? checkbox.checkedBg : checkbox.bg,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -308,10 +333,15 @@ export default function JotFormContact(props: Props) {
                             }}
                         >
                             {values.consent && (
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                <svg
+                                    width={checkbox.size * 0.55}
+                                    height={checkbox.size * 0.55}
+                                    viewBox="0 0 10 10"
+                                    fill="none"
+                                >
                                     <path
                                         d="M2 5l2.5 2.5L8 3"
-                                        stroke={button.textColor}
+                                        stroke={checkbox.checkColor}
                                         strokeWidth="1.5"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -329,7 +359,11 @@ export default function JotFormContact(props: Props) {
                             I agree to receive follow-up communication and occasional updates by email. *
                         </span>
                     </label>
-                    {errors.consent && <span style={{ ...errorStyle, marginLeft: 28 }}>{errors.consent}</span>}
+                    {errors.consent && (
+                        <span style={{ ...errorStyle, marginLeft: checkbox.size + 10 }}>
+                            {errors.consent}
+                        </span>
+                    )}
                 </div>
 
                 {/* Submit */}
@@ -343,8 +377,8 @@ export default function JotFormContact(props: Props) {
                         alignItems: "center",
                         justifyContent: "center",
                         gap: 8,
-                        width: "100%",
-                        padding: `${input.paddingV + 4}px ${input.paddingH}px`,
+                        width: button.width === "fill" ? "100%" : "auto",
+                        padding: `${button.paddingV}px ${button.paddingH}px`,
                         background: buttonHovered && status !== "loading" ? button.hoverBg : button.bg,
                         color: button.textColor,
                         border: "none",
@@ -388,6 +422,7 @@ interface InputProps {
     font: Record<string, any>
     bg: string
     borderColor: string
+    borderStyle: "solid" | "dashed" | "dotted"
     focusBorderColor: string
     textColor: string
     placeholderColor: string
@@ -401,6 +436,17 @@ interface ButtonProps {
     bg: string
     hoverBg: string
     textColor: string
+    width: "fill" | "fit"
+    paddingV: number
+    paddingH: number
+}
+
+interface CheckboxProps {
+    size: number
+    borderRadius: number
+    bg: string
+    checkedBg: string
+    checkColor: string
 }
 
 interface LabelProps {
@@ -412,12 +458,14 @@ interface FormProps {
     bg: string
     gap: number
     errorColor: string
+    align: "left" | "center" | "right"
 }
 
 interface Props {
     style?: CSSProperties
     input: InputProps
     button: ButtonProps
+    checkbox: CheckboxProps
     label: LabelProps
     form: FormProps
     submitButtonText: string
@@ -447,7 +495,15 @@ addPropertyControls(JotFormContact, {
             borderColor: {
                 type: ControlType.Color,
                 defaultValue: "rgba(0,0,0,0.15)",
-                title: "Border",
+                title: "Border Color",
+            },
+            borderStyle: {
+                type: ControlType.Enum,
+                options: ["solid", "dashed", "dotted"],
+                optionTitles: ["Solid", "Dashed", "Dotted"],
+                displaySegmentedControl: true,
+                defaultValue: "solid",
+                title: "Border Style",
             },
             focusBorderColor: {
                 type: ControlType.Color,
@@ -468,7 +524,7 @@ addPropertyControls(JotFormContact, {
                 type: ControlType.Number,
                 defaultValue: 8,
                 min: 0,
-                max: 24,
+                max: 32,
                 step: 1,
                 displayStepper: true,
                 title: "Radius",
@@ -476,8 +532,8 @@ addPropertyControls(JotFormContact, {
             paddingV: {
                 type: ControlType.Number,
                 defaultValue: 11,
-                min: 6,
-                max: 24,
+                min: 4,
+                max: 32,
                 step: 1,
                 displayStepper: true,
                 title: "Padding V",
@@ -485,8 +541,8 @@ addPropertyControls(JotFormContact, {
             paddingH: {
                 type: ControlType.Number,
                 defaultValue: 14,
-                min: 8,
-                max: 32,
+                min: 4,
+                max: 48,
                 step: 1,
                 displayStepper: true,
                 title: "Padding H",
@@ -519,6 +575,72 @@ addPropertyControls(JotFormContact, {
                 type: ControlType.Color,
                 defaultValue: "#ffffff",
                 title: "Text",
+            },
+            width: {
+                type: ControlType.Enum,
+                options: ["fill", "fit"],
+                optionTitles: ["Fill", "Fit Content"],
+                displaySegmentedControl: true,
+                defaultValue: "fill",
+                title: "Width",
+            },
+            paddingV: {
+                type: ControlType.Number,
+                defaultValue: 14,
+                min: 4,
+                max: 32,
+                step: 1,
+                displayStepper: true,
+                title: "Padding V",
+            },
+            paddingH: {
+                type: ControlType.Number,
+                defaultValue: 24,
+                min: 4,
+                max: 64,
+                step: 1,
+                displayStepper: true,
+                title: "Padding H",
+            },
+        },
+    },
+
+    checkbox: {
+        type: ControlType.Object,
+        title: "Checkbox",
+        controls: {
+            size: {
+                type: ControlType.Number,
+                defaultValue: 18,
+                min: 12,
+                max: 28,
+                step: 1,
+                displayStepper: true,
+                title: "Size",
+            },
+            borderRadius: {
+                type: ControlType.Number,
+                defaultValue: 4,
+                min: 0,
+                max: 14,
+                step: 1,
+                displayStepper: true,
+                title: "Radius",
+            },
+            bg: {
+                type: ControlType.Color,
+                defaultValue: "#ffffff",
+                title: "Background",
+            },
+            checkedBg: {
+                type: ControlType.Color,
+                defaultValue: "#111111",
+                title: "Checked BG",
+            },
+            checkColor: {
+                type: ControlType.Color,
+                defaultValue: "#ffffff",
+                title: "Check Mark",
             },
         },
     },
@@ -554,8 +676,8 @@ addPropertyControls(JotFormContact, {
             gap: {
                 type: ControlType.Number,
                 defaultValue: 20,
-                min: 8,
-                max: 48,
+                min: 4,
+                max: 64,
                 step: 2,
                 displayStepper: true,
                 title: "Field Gap",
@@ -564,6 +686,14 @@ addPropertyControls(JotFormContact, {
                 type: ControlType.Color,
                 defaultValue: "#e53e3e",
                 title: "Error Color",
+            },
+            align: {
+                type: ControlType.Enum,
+                options: ["left", "center", "right"],
+                optionTitles: ["Left", "Center", "Right"],
+                displaySegmentedControl: true,
+                defaultValue: "left",
+                title: "Align",
             },
         },
     },

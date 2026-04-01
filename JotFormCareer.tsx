@@ -18,6 +18,8 @@ export default function JotFormCareer(props: Props) {
         style,
         input,
         button,
+        checkbox,
+        fileUpload,
         label,
         form,
         submitButtonText,
@@ -108,6 +110,12 @@ export default function JotFormCareer(props: Props) {
         if (file) handleFileChange(file)
     }
 
+    // ─── Alignment helpers ────────────────────────────────────────────────────
+
+    const alignItems =
+        form.align === "center" ? "center" : form.align === "right" ? "flex-end" : "flex-start"
+    const textAlign = form.align as CSSProperties["textAlign"]
+
     // ─── Shared style helpers ─────────────────────────────────────────────────
 
     const inputStyle = (field: string): CSSProperties => ({
@@ -115,7 +123,7 @@ export default function JotFormCareer(props: Props) {
         width: "100%",
         boxSizing: "border-box",
         background: input.bg,
-        border: `1px solid ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
+        border: `1px ${input.borderStyle} ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
         borderRadius: input.borderRadius,
         padding: `${input.paddingV}px ${input.paddingH}px`,
         color: input.textColor,
@@ -130,6 +138,7 @@ export default function JotFormCareer(props: Props) {
         display: "block",
         marginBottom: 6,
         color: label.color,
+        textAlign,
         ...label.font,
     }
 
@@ -137,11 +146,12 @@ export default function JotFormCareer(props: Props) {
         marginTop: 4,
         fontSize: 12,
         color: form.errorColor,
+        textAlign,
         ...label.font,
         fontWeight: 400,
     }
 
-    const fieldStyle: CSSProperties = { display: "flex", flexDirection: "column" }
+    const fieldStyle: CSSProperties = { display: "flex", flexDirection: "column", width: "100%" }
 
     // ─── Success state ────────────────────────────────────────────────────────
 
@@ -190,10 +200,18 @@ export default function JotFormCareer(props: Props) {
                 ...style,
             }}
         >
-            <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: form.gap }}>
-
+            <form
+                onSubmit={handleSubmit}
+                noValidate
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: form.gap,
+                    alignItems,
+                }}
+            >
                 {/* Row: First Name + Last Name */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: form.gap }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: form.gap, width: "100%" }}>
                     <div style={fieldStyle}>
                         <label style={labelStyle}>First name *</label>
                         <input
@@ -293,39 +311,68 @@ export default function JotFormCareer(props: Props) {
                         onDrop={handleFileDrop}
                         style={{
                             display: "flex",
+                            flexDirection: fileUpload.layout === "vertical" ? "column" : "row",
                             alignItems: "center",
-                            gap: 12,
-                            padding: `${input.paddingV}px ${input.paddingH}px`,
-                            background: fileHovered ? input.focusBorderColor + "10" : input.bg,
-                            border: `1px ${fileHovered ? "dashed" : "solid"} ${errors.resume ? form.errorColor : fileHovered ? input.focusBorderColor : input.borderColor}`,
+                            justifyContent: fileUpload.layout === "vertical" ? "center" : "flex-start",
+                            gap: fileUpload.layout === "vertical" ? 8 : 12,
+                            padding: `${fileUpload.paddingV}px ${fileUpload.paddingH}px`,
+                            textAlign: fileUpload.layout === "vertical" ? "center" : undefined,
+                            background: fileHovered ? `${input.focusBorderColor}10` : input.bg,
+                            border: `1px ${fileHovered ? "dashed" : input.borderStyle} ${errors.resume ? form.errorColor : fileHovered ? input.focusBorderColor : input.borderColor}`,
                             borderRadius: input.borderRadius,
                             cursor: "pointer",
                             transition: "border-color 0.15s ease, background 0.15s ease",
                             boxSizing: "border-box",
                         }}
                     >
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0, opacity: 0.5 }}>
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            style={{ flexShrink: 0, opacity: resumeFile ? 0.7 : 0.4 }}
+                        >
                             <path
-                                d="M9 12V4M9 4l-3 3M9 4l3 3"
-                                stroke={input.textColor}
+                                d="M10 13V5M10 5L7 8M10 5l3 3"
+                                stroke={resumeFile ? button.bg : input.textColor}
                                 strokeWidth="1.5"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                             />
                             <path
-                                d="M3 14h12"
-                                stroke={input.textColor}
+                                d="M4 16h12"
+                                stroke={resumeFile ? button.bg : input.textColor}
                                 strokeWidth="1.5"
                                 strokeLinecap="round"
                             />
                         </svg>
-                        <span style={{ ...input.font, color: resumeFile ? input.textColor : input.placeholderColor, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <span
+                            style={{
+                                ...input.font,
+                                color: resumeFile ? input.textColor : input.placeholderColor,
+                                flex: fileUpload.layout === "vertical" ? undefined : 1,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
                             {resumeFile ? resumeFile.name : "Click or drag to upload your resume"}
                         </span>
                         {resumeFile && (
                             <span
-                                onClick={(e) => { e.stopPropagation(); handleFileChange(null); if (fileInputRef.current) fileInputRef.current.value = "" }}
-                                style={{ ...input.font, color: form.errorColor, cursor: "pointer", flexShrink: 0, opacity: 0.7 }}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleFileChange(null)
+                                    if (fileInputRef.current) fileInputRef.current.value = ""
+                                }}
+                                style={{
+                                    ...input.font,
+                                    color: form.errorColor,
+                                    cursor: "pointer",
+                                    flexShrink: 0,
+                                    opacity: 0.6,
+                                    lineHeight: 1,
+                                }}
                             >
                                 ✕
                             </span>
@@ -338,7 +385,7 @@ export default function JotFormCareer(props: Props) {
                             style={{ display: "none" }}
                         />
                     </div>
-                    <span style={{ ...errorStyle, opacity: errors.resume ? 1 : 0.5 }}>
+                    <span style={{ ...errorStyle, color: errors.resume ? form.errorColor : `${input.textColor}55` }}>
                         {errors.resume ? errors.resume : "PDF, DOC or DOCX · Max 10 MB"}
                     </span>
                 </div>
@@ -362,17 +409,25 @@ export default function JotFormCareer(props: Props) {
                 </div>
 
                 {/* Consent */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%" }}>
+                    <label
+                        style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 10,
+                            cursor: "pointer",
+                            justifyContent: alignItems,
+                        }}
+                    >
                         <span
                             style={{
                                 flexShrink: 0,
-                                width: 18,
-                                height: 18,
-                                marginTop: 1,
-                                borderRadius: Math.min(input.borderRadius as number, 4),
-                                border: `1.5px solid ${values.consent ? button.bg : errors.consent ? form.errorColor : input.borderColor}`,
-                                background: values.consent ? button.bg : input.bg,
+                                width: checkbox.size,
+                                height: checkbox.size,
+                                marginTop: 2,
+                                borderRadius: checkbox.borderRadius,
+                                border: `1.5px solid ${values.consent ? checkbox.checkedBg : errors.consent ? form.errorColor : input.borderColor}`,
+                                background: values.consent ? checkbox.checkedBg : checkbox.bg,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -380,10 +435,15 @@ export default function JotFormCareer(props: Props) {
                             }}
                         >
                             {values.consent && (
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                <svg
+                                    width={checkbox.size * 0.55}
+                                    height={checkbox.size * 0.55}
+                                    viewBox="0 0 10 10"
+                                    fill="none"
+                                >
                                     <path
                                         d="M2 5l2.5 2.5L8 3"
-                                        stroke={button.textColor}
+                                        stroke={checkbox.checkColor}
                                         strokeWidth="1.5"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -401,7 +461,11 @@ export default function JotFormCareer(props: Props) {
                             I agree to receive follow-up communication and occasional updates by email. *
                         </span>
                     </label>
-                    {errors.consent && <span style={{ ...errorStyle, marginLeft: 28 }}>{errors.consent}</span>}
+                    {errors.consent && (
+                        <span style={{ ...errorStyle, marginLeft: checkbox.size + 10 }}>
+                            {errors.consent}
+                        </span>
+                    )}
                 </div>
 
                 {/* Submit */}
@@ -415,8 +479,8 @@ export default function JotFormCareer(props: Props) {
                         alignItems: "center",
                         justifyContent: "center",
                         gap: 8,
-                        width: "100%",
-                        padding: `${input.paddingV + 4}px ${input.paddingH}px`,
+                        width: button.width === "fill" ? "100%" : "auto",
+                        padding: `${button.paddingV}px ${button.paddingH}px`,
                         background: buttonHovered && status !== "loading" ? button.hoverBg : button.bg,
                         color: button.textColor,
                         border: "none",
@@ -460,6 +524,7 @@ interface InputProps {
     font: Record<string, any>
     bg: string
     borderColor: string
+    borderStyle: "solid" | "dashed" | "dotted"
     focusBorderColor: string
     textColor: string
     placeholderColor: string
@@ -473,6 +538,23 @@ interface ButtonProps {
     bg: string
     hoverBg: string
     textColor: string
+    width: "fill" | "fit"
+    paddingV: number
+    paddingH: number
+}
+
+interface CheckboxProps {
+    size: number
+    borderRadius: number
+    bg: string
+    checkedBg: string
+    checkColor: string
+}
+
+interface FileUploadProps {
+    layout: "horizontal" | "vertical"
+    paddingV: number
+    paddingH: number
 }
 
 interface LabelProps {
@@ -484,12 +566,15 @@ interface FormProps {
     bg: string
     gap: number
     errorColor: string
+    align: "left" | "center" | "right"
 }
 
 interface Props {
     style?: CSSProperties
     input: InputProps
     button: ButtonProps
+    checkbox: CheckboxProps
+    fileUpload: FileUploadProps
     label: LabelProps
     form: FormProps
     submitButtonText: string
@@ -519,7 +604,15 @@ addPropertyControls(JotFormCareer, {
             borderColor: {
                 type: ControlType.Color,
                 defaultValue: "rgba(0,0,0,0.15)",
-                title: "Border",
+                title: "Border Color",
+            },
+            borderStyle: {
+                type: ControlType.Enum,
+                options: ["solid", "dashed", "dotted"],
+                optionTitles: ["Solid", "Dashed", "Dotted"],
+                displaySegmentedControl: true,
+                defaultValue: "solid",
+                title: "Border Style",
             },
             focusBorderColor: {
                 type: ControlType.Color,
@@ -540,7 +633,7 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Number,
                 defaultValue: 8,
                 min: 0,
-                max: 24,
+                max: 32,
                 step: 1,
                 displayStepper: true,
                 title: "Radius",
@@ -548,8 +641,8 @@ addPropertyControls(JotFormCareer, {
             paddingV: {
                 type: ControlType.Number,
                 defaultValue: 11,
-                min: 6,
-                max: 24,
+                min: 4,
+                max: 32,
                 step: 1,
                 displayStepper: true,
                 title: "Padding V",
@@ -557,8 +650,8 @@ addPropertyControls(JotFormCareer, {
             paddingH: {
                 type: ControlType.Number,
                 defaultValue: 14,
-                min: 8,
-                max: 32,
+                min: 4,
+                max: 48,
                 step: 1,
                 displayStepper: true,
                 title: "Padding H",
@@ -591,6 +684,105 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Color,
                 defaultValue: "#ffffff",
                 title: "Text",
+            },
+            width: {
+                type: ControlType.Enum,
+                options: ["fill", "fit"],
+                optionTitles: ["Fill", "Fit Content"],
+                displaySegmentedControl: true,
+                defaultValue: "fill",
+                title: "Width",
+            },
+            paddingV: {
+                type: ControlType.Number,
+                defaultValue: 14,
+                min: 4,
+                max: 32,
+                step: 1,
+                displayStepper: true,
+                title: "Padding V",
+            },
+            paddingH: {
+                type: ControlType.Number,
+                defaultValue: 24,
+                min: 4,
+                max: 64,
+                step: 1,
+                displayStepper: true,
+                title: "Padding H",
+            },
+        },
+    },
+
+    checkbox: {
+        type: ControlType.Object,
+        title: "Checkbox",
+        controls: {
+            size: {
+                type: ControlType.Number,
+                defaultValue: 18,
+                min: 12,
+                max: 28,
+                step: 1,
+                displayStepper: true,
+                title: "Size",
+            },
+            borderRadius: {
+                type: ControlType.Number,
+                defaultValue: 4,
+                min: 0,
+                max: 14,
+                step: 1,
+                displayStepper: true,
+                title: "Radius",
+            },
+            bg: {
+                type: ControlType.Color,
+                defaultValue: "#ffffff",
+                title: "Background",
+            },
+            checkedBg: {
+                type: ControlType.Color,
+                defaultValue: "#111111",
+                title: "Checked BG",
+            },
+            checkColor: {
+                type: ControlType.Color,
+                defaultValue: "#ffffff",
+                title: "Check Mark",
+            },
+        },
+    },
+
+    fileUpload: {
+        type: ControlType.Object,
+        title: "File Upload",
+        controls: {
+            layout: {
+                type: ControlType.Enum,
+                options: ["horizontal", "vertical"],
+                optionTitles: ["Horizontal", "Vertical"],
+                displaySegmentedControl: true,
+                defaultValue: "horizontal",
+                title: "Layout",
+            },
+            paddingV: {
+                type: ControlType.Number,
+                defaultValue: 16,
+                min: 4,
+                max: 48,
+                step: 1,
+                displayStepper: true,
+                title: "Padding V",
+            },
+            paddingH: {
+                type: ControlType.Number,
+                defaultValue: 16,
+                min: 4,
+                max: 48,
+                step: 1,
+                displayStepper: true,
+                title: "Padding H",
             },
         },
     },
@@ -626,8 +818,8 @@ addPropertyControls(JotFormCareer, {
             gap: {
                 type: ControlType.Number,
                 defaultValue: 20,
-                min: 8,
-                max: 48,
+                min: 4,
+                max: 64,
                 step: 2,
                 displayStepper: true,
                 title: "Field Gap",
@@ -636,6 +828,14 @@ addPropertyControls(JotFormCareer, {
                 type: ControlType.Color,
                 defaultValue: "#e53e3e",
                 title: "Error Color",
+            },
+            align: {
+                type: ControlType.Enum,
+                options: ["left", "center", "right"],
+                optionTitles: ["Left", "Center", "Right"],
+                displaySegmentedControl: true,
+                defaultValue: "left",
+                title: "Align",
             },
         },
     },
