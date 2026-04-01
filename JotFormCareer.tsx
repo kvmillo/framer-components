@@ -16,24 +16,10 @@ import { useState, useRef, startTransition, type CSSProperties } from "react"
 export default function JotFormCareer(props: Props) {
     const {
         style,
-        labelFont,
-        inputFont,
-        buttonFont,
-        labelColor,
-        formBg,
-        inputBg,
-        inputBorderColor,
-        inputFocusBorderColor,
-        inputTextColor,
-        placeholderColor,
-        buttonBg,
-        buttonTextColor,
-        buttonHoverBg,
-        errorColor,
-        borderRadius,
-        inputPaddingV,
-        inputPaddingH,
-        formGap,
+        input,
+        button,
+        label,
+        form,
         submitButtonText,
         showSuccessMessage,
         successMessage,
@@ -128,14 +114,14 @@ export default function JotFormCareer(props: Props) {
         display: "block",
         width: "100%",
         boxSizing: "border-box",
-        background: inputBg,
-        border: `1px solid ${focused === field ? inputFocusBorderColor : errors[field] ? errorColor : inputBorderColor}`,
-        borderRadius,
-        padding: `${inputPaddingV}px ${inputPaddingH}px`,
-        color: inputTextColor,
+        background: input.bg,
+        border: `1px solid ${focused === field ? input.focusBorderColor : errors[field] ? form.errorColor : input.borderColor}`,
+        borderRadius: input.borderRadius,
+        padding: `${input.paddingV}px ${input.paddingH}px`,
+        color: input.textColor,
         outline: "none",
         transition: "border-color 0.15s ease",
-        ...inputFont,
+        ...input.font,
         WebkitAppearance: "none",
         appearance: "none",
     })
@@ -143,15 +129,15 @@ export default function JotFormCareer(props: Props) {
     const labelStyle: CSSProperties = {
         display: "block",
         marginBottom: 6,
-        color: labelColor,
-        ...labelFont,
+        color: label.color,
+        ...label.font,
     }
 
     const errorStyle: CSSProperties = {
         marginTop: 4,
         fontSize: 12,
-        color: errorColor,
-        ...labelFont,
+        color: form.errorColor,
+        ...label.font,
         fontWeight: 400,
     }
 
@@ -164,9 +150,9 @@ export default function JotFormCareer(props: Props) {
             <div
                 style={{
                     position: "relative",
-                    background: formBg,
-                    borderRadius,
-                    padding: `${inputPaddingV * 3}px ${inputPaddingH * 2}px`,
+                    background: form.bg,
+                    borderRadius: input.borderRadius,
+                    padding: `${input.paddingV * 3}px ${input.paddingH * 2}px`,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -178,16 +164,16 @@ export default function JotFormCareer(props: Props) {
                 }}
             >
                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                    <circle cx="20" cy="20" r="20" fill={buttonBg} opacity={0.12} />
+                    <circle cx="20" cy="20" r="20" fill={button.bg} opacity={0.12} />
                     <path
                         d="M13 20l5 5 9-9"
-                        stroke={buttonBg}
+                        stroke={button.bg}
                         strokeWidth="2.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                     />
                 </svg>
-                <p style={{ margin: 0, color: inputTextColor, ...labelFont }}>{successMessage}</p>
+                <p style={{ margin: 0, color: input.textColor, ...label.font }}>{successMessage}</p>
             </div>
         )
     }
@@ -198,16 +184,16 @@ export default function JotFormCareer(props: Props) {
         <div
             style={{
                 position: "relative",
-                background: formBg,
+                background: form.bg,
                 width: "100%",
                 boxSizing: "border-box",
                 ...style,
             }}
         >
-            <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: formGap }}>
+            <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: form.gap }}>
 
                 {/* Row: First Name + Last Name */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: formGap }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: form.gap }}>
                     <div style={fieldStyle}>
                         <label style={labelStyle}>First name *</label>
                         <input
@@ -263,8 +249,8 @@ export default function JotFormCareer(props: Props) {
                             style={{
                                 ...inputStyle("position"),
                                 cursor: "pointer",
-                                paddingRight: inputPaddingH + 28,
-                                color: values.position ? inputTextColor : placeholderColor,
+                                paddingRight: input.paddingH + 28,
+                                color: values.position ? input.textColor : input.placeholderColor,
                             }}
                         >
                             <option value="" disabled hidden>Please select</option>
@@ -278,7 +264,7 @@ export default function JotFormCareer(props: Props) {
                             fill="none"
                             style={{
                                 position: "absolute",
-                                right: inputPaddingH,
+                                right: input.paddingH,
                                 top: "50%",
                                 transform: "translateY(-50%)",
                                 pointerEvents: "none",
@@ -287,7 +273,7 @@ export default function JotFormCareer(props: Props) {
                         >
                             <path
                                 d="M4 6l4 4 4-4"
-                                stroke={inputTextColor}
+                                stroke={input.textColor}
                                 strokeWidth="1.5"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -309,38 +295,37 @@ export default function JotFormCareer(props: Props) {
                             display: "flex",
                             alignItems: "center",
                             gap: 12,
-                            padding: `${inputPaddingV}px ${inputPaddingH}px`,
-                            background: fileHovered ? inputFocusBorderColor + "10" : inputBg,
-                            border: `1px ${fileHovered ? "dashed" : "solid"} ${errors.resume ? errorColor : fileHovered ? inputFocusBorderColor : inputBorderColor}`,
-                            borderRadius,
+                            padding: `${input.paddingV}px ${input.paddingH}px`,
+                            background: fileHovered ? input.focusBorderColor + "10" : input.bg,
+                            border: `1px ${fileHovered ? "dashed" : "solid"} ${errors.resume ? form.errorColor : fileHovered ? input.focusBorderColor : input.borderColor}`,
+                            borderRadius: input.borderRadius,
                             cursor: "pointer",
                             transition: "border-color 0.15s ease, background 0.15s ease",
                             boxSizing: "border-box",
                         }}
                     >
-                        {/* Upload icon */}
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0, opacity: 0.5 }}>
                             <path
                                 d="M9 12V4M9 4l-3 3M9 4l3 3"
-                                stroke={inputTextColor}
+                                stroke={input.textColor}
                                 strokeWidth="1.5"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                             />
                             <path
                                 d="M3 14h12"
-                                stroke={inputTextColor}
+                                stroke={input.textColor}
                                 strokeWidth="1.5"
                                 strokeLinecap="round"
                             />
                         </svg>
-                        <span style={{ ...inputFont, color: resumeFile ? inputTextColor : placeholderColor, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <span style={{ ...input.font, color: resumeFile ? input.textColor : input.placeholderColor, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {resumeFile ? resumeFile.name : "Click or drag to upload your resume"}
                         </span>
                         {resumeFile && (
                             <span
                                 onClick={(e) => { e.stopPropagation(); handleFileChange(null); if (fileInputRef.current) fileInputRef.current.value = "" }}
-                                style={{ ...inputFont, color: errorColor, cursor: "pointer", flexShrink: 0, opacity: 0.7 }}
+                                style={{ ...input.font, color: form.errorColor, cursor: "pointer", flexShrink: 0, opacity: 0.7 }}
                             >
                                 ✕
                             </span>
@@ -353,10 +338,8 @@ export default function JotFormCareer(props: Props) {
                             style={{ display: "none" }}
                         />
                     </div>
-                    <span style={{ ...errorStyle, opacity: 0.5, marginTop: 4 }}>
-                        {errors.resume
-                            ? <span style={{ color: errorColor }}>{errors.resume}</span>
-                            : "PDF, DOC or DOCX · Max 10 MB"}
+                    <span style={{ ...errorStyle, opacity: errors.resume ? 1 : 0.5 }}>
+                        {errors.resume ? errors.resume : "PDF, DOC or DOCX · Max 10 MB"}
                     </span>
                 </div>
 
@@ -380,23 +363,16 @@ export default function JotFormCareer(props: Props) {
 
                 {/* Consent */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <label
-                        style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: 10,
-                            cursor: "pointer",
-                        }}
-                    >
+                    <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
                         <span
                             style={{
                                 flexShrink: 0,
                                 width: 18,
                                 height: 18,
                                 marginTop: 1,
-                                borderRadius: Math.min(borderRadius as number, 4),
-                                border: `1.5px solid ${values.consent ? buttonBg : errors.consent ? errorColor : inputBorderColor}`,
-                                background: values.consent ? buttonBg : inputBg,
+                                borderRadius: Math.min(input.borderRadius as number, 4),
+                                border: `1.5px solid ${values.consent ? button.bg : errors.consent ? form.errorColor : input.borderColor}`,
+                                background: values.consent ? button.bg : input.bg,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -407,7 +383,7 @@ export default function JotFormCareer(props: Props) {
                                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                                     <path
                                         d="M2 5l2.5 2.5L8 3"
-                                        stroke={buttonTextColor}
+                                        stroke={button.textColor}
                                         strokeWidth="1.5"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -421,7 +397,7 @@ export default function JotFormCareer(props: Props) {
                             onChange={(e) => set("consent", e.target.checked)}
                             style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
                         />
-                        <span style={{ ...labelFont, color: labelColor, lineHeight: "1.4" }}>
+                        <span style={{ ...label.font, color: label.color, lineHeight: "1.4" }}>
                             I agree to receive follow-up communication and occasional updates by email. *
                         </span>
                     </label>
@@ -440,15 +416,15 @@ export default function JotFormCareer(props: Props) {
                         justifyContent: "center",
                         gap: 8,
                         width: "100%",
-                        padding: `${inputPaddingV + 4}px ${inputPaddingH}px`,
-                        background: buttonHovered && status !== "loading" ? buttonHoverBg : buttonBg,
-                        color: buttonTextColor,
+                        padding: `${input.paddingV + 4}px ${input.paddingH}px`,
+                        background: buttonHovered && status !== "loading" ? button.hoverBg : button.bg,
+                        color: button.textColor,
                         border: "none",
-                        borderRadius,
+                        borderRadius: input.borderRadius,
                         cursor: status === "loading" ? "wait" : "pointer",
                         opacity: status === "loading" ? 0.7 : 1,
                         transition: "background 0.15s ease, opacity 0.15s ease",
-                        ...buttonFont,
+                        ...button.font,
                     }}
                 >
                     {status === "loading" ? (
@@ -460,8 +436,8 @@ export default function JotFormCareer(props: Props) {
                                 fill="none"
                                 style={{ animation: "jfc-spin 0.8s linear infinite" }}
                             >
-                                <circle cx="8" cy="8" r="6" stroke={buttonTextColor} strokeWidth="2" strokeOpacity="0.3" />
-                                <path d="M8 2a6 6 0 0 1 6 6" stroke={buttonTextColor} strokeWidth="2" strokeLinecap="round" />
+                                <circle cx="8" cy="8" r="6" stroke={button.textColor} strokeWidth="2" strokeOpacity="0.3" />
+                                <path d="M8 2a6 6 0 0 1 6 6" stroke={button.textColor} strokeWidth="2" strokeLinecap="round" />
                             </svg>
                             <style>{`@keyframes jfc-spin { to { transform: rotate(360deg); } }`}</style>
                             Sending…
@@ -480,26 +456,42 @@ export default function JotFormCareer(props: Props) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface InputProps {
+    font: Record<string, any>
+    bg: string
+    borderColor: string
+    focusBorderColor: string
+    textColor: string
+    placeholderColor: string
+    borderRadius: number
+    paddingV: number
+    paddingH: number
+}
+
+interface ButtonProps {
+    font: Record<string, any>
+    bg: string
+    hoverBg: string
+    textColor: string
+}
+
+interface LabelProps {
+    font: Record<string, any>
+    color: string
+}
+
+interface FormProps {
+    bg: string
+    gap: number
+    errorColor: string
+}
+
 interface Props {
     style?: CSSProperties
-    labelFont: Record<string, any>
-    inputFont: Record<string, any>
-    buttonFont: Record<string, any>
-    labelColor: string
-    formBg: string
-    inputBg: string
-    inputBorderColor: string
-    inputFocusBorderColor: string
-    inputTextColor: string
-    placeholderColor: string
-    buttonBg: string
-    buttonTextColor: string
-    buttonHoverBg: string
-    errorColor: string
-    borderRadius: number
-    inputPaddingV: number
-    inputPaddingH: number
-    formGap: number
+    input: InputProps
+    button: ButtonProps
+    label: LabelProps
+    form: FormProps
     submitButtonText: string
     showSuccessMessage: boolean
     successMessage: string
@@ -508,125 +500,146 @@ interface Props {
 // ─── Property Controls ────────────────────────────────────────────────────────
 
 addPropertyControls(JotFormCareer, {
-    // Typography
-    labelFont: {
-        type: ControlType.Font,
-        controls: "extended",
-        defaultFontType: "sans-serif",
-        defaultValue: { fontSize: "14px", variant: "Medium", lineHeight: "1.4em" },
-        title: "Label Font",
-    },
-    inputFont: {
-        type: ControlType.Font,
-        controls: "extended",
-        defaultFontType: "sans-serif",
-        defaultValue: { fontSize: "15px", variant: "Regular", lineHeight: "1.5em" },
-        title: "Input Font",
-    },
-    buttonFont: {
-        type: ControlType.Font,
-        controls: "extended",
-        defaultFontType: "sans-serif",
-        defaultValue: { fontSize: "15px", variant: "Medium", lineHeight: "1.5em" },
-        title: "Button Font",
-    },
-
-    // Colors
-    labelColor: {
-        type: ControlType.Color,
-        defaultValue: "rgba(0,0,0,0.7)",
-        title: "Label Color",
-    },
-    formBg: {
-        type: ControlType.Color,
-        defaultValue: "transparent",
-        title: "Form Background",
-    },
-    inputBg: {
-        type: ControlType.Color,
-        defaultValue: "#ffffff",
-        title: "Input Background",
-    },
-    inputBorderColor: {
-        type: ControlType.Color,
-        defaultValue: "rgba(0,0,0,0.15)",
-        title: "Input Border",
-    },
-    inputFocusBorderColor: {
-        type: ControlType.Color,
-        defaultValue: "rgba(0,0,0,0.6)",
-        title: "Input Focus Border",
-    },
-    inputTextColor: {
-        type: ControlType.Color,
-        defaultValue: "#111111",
-        title: "Input Text",
-    },
-    placeholderColor: {
-        type: ControlType.Color,
-        defaultValue: "rgba(0,0,0,0.3)",
-        title: "Placeholder Color",
-    },
-    buttonBg: {
-        type: ControlType.Color,
-        defaultValue: "#111111",
-        title: "Button Background",
-    },
-    buttonHoverBg: {
-        type: ControlType.Color,
-        defaultValue: "#333333",
-        title: "Button Hover BG",
-    },
-    buttonTextColor: {
-        type: ControlType.Color,
-        defaultValue: "#ffffff",
-        title: "Button Text",
-    },
-    errorColor: {
-        type: ControlType.Color,
-        defaultValue: "#e53e3e",
-        title: "Error Color",
+    input: {
+        type: ControlType.Object,
+        title: "Input",
+        controls: {
+            font: {
+                type: ControlType.Font,
+                controls: "extended",
+                defaultFontType: "sans-serif",
+                defaultValue: { fontSize: "15px", variant: "Regular", lineHeight: "1.5em" },
+                title: "Font",
+            },
+            bg: {
+                type: ControlType.Color,
+                defaultValue: "#ffffff",
+                title: "Background",
+            },
+            borderColor: {
+                type: ControlType.Color,
+                defaultValue: "rgba(0,0,0,0.15)",
+                title: "Border",
+            },
+            focusBorderColor: {
+                type: ControlType.Color,
+                defaultValue: "rgba(0,0,0,0.6)",
+                title: "Focus Border",
+            },
+            textColor: {
+                type: ControlType.Color,
+                defaultValue: "#111111",
+                title: "Text",
+            },
+            placeholderColor: {
+                type: ControlType.Color,
+                defaultValue: "rgba(0,0,0,0.3)",
+                title: "Placeholder",
+            },
+            borderRadius: {
+                type: ControlType.Number,
+                defaultValue: 8,
+                min: 0,
+                max: 24,
+                step: 1,
+                displayStepper: true,
+                title: "Radius",
+            },
+            paddingV: {
+                type: ControlType.Number,
+                defaultValue: 11,
+                min: 6,
+                max: 24,
+                step: 1,
+                displayStepper: true,
+                title: "Padding V",
+            },
+            paddingH: {
+                type: ControlType.Number,
+                defaultValue: 14,
+                min: 8,
+                max: 32,
+                step: 1,
+                displayStepper: true,
+                title: "Padding H",
+            },
+        },
     },
 
-    // Spacing & shape
-    borderRadius: {
-        type: ControlType.Number,
-        defaultValue: 8,
-        min: 0,
-        max: 24,
-        step: 1,
-        displayStepper: true,
-        title: "Border Radius",
-    },
-    inputPaddingV: {
-        type: ControlType.Number,
-        defaultValue: 11,
-        min: 6,
-        max: 24,
-        step: 1,
-        displayStepper: true,
-        title: "Input Padding V",
-    },
-    inputPaddingH: {
-        type: ControlType.Number,
-        defaultValue: 14,
-        min: 8,
-        max: 32,
-        step: 1,
-        displayStepper: true,
-        title: "Input Padding H",
-    },
-    formGap: {
-        type: ControlType.Number,
-        defaultValue: 20,
-        min: 8,
-        max: 48,
-        step: 2,
-        displayStepper: true,
-        title: "Field Gap",
+    button: {
+        type: ControlType.Object,
+        title: "Button",
+        controls: {
+            font: {
+                type: ControlType.Font,
+                controls: "extended",
+                defaultFontType: "sans-serif",
+                defaultValue: { fontSize: "15px", variant: "Medium", lineHeight: "1.5em" },
+                title: "Font",
+            },
+            bg: {
+                type: ControlType.Color,
+                defaultValue: "#111111",
+                title: "Background",
+            },
+            hoverBg: {
+                type: ControlType.Color,
+                defaultValue: "#333333",
+                title: "Hover BG",
+            },
+            textColor: {
+                type: ControlType.Color,
+                defaultValue: "#ffffff",
+                title: "Text",
+            },
+        },
     },
 
-    // Content
+    label: {
+        type: ControlType.Object,
+        title: "Label",
+        controls: {
+            font: {
+                type: ControlType.Font,
+                controls: "extended",
+                defaultFontType: "sans-serif",
+                defaultValue: { fontSize: "14px", variant: "Medium", lineHeight: "1.4em" },
+                title: "Font",
+            },
+            color: {
+                type: ControlType.Color,
+                defaultValue: "rgba(0,0,0,0.7)",
+                title: "Color",
+            },
+        },
+    },
+
+    form: {
+        type: ControlType.Object,
+        title: "Form",
+        controls: {
+            bg: {
+                type: ControlType.Color,
+                defaultValue: "transparent",
+                title: "Background",
+            },
+            gap: {
+                type: ControlType.Number,
+                defaultValue: 20,
+                min: 8,
+                max: 48,
+                step: 2,
+                displayStepper: true,
+                title: "Field Gap",
+            },
+            errorColor: {
+                type: ControlType.Color,
+                defaultValue: "#e53e3e",
+                title: "Error Color",
+            },
+        },
+    },
+
     submitButtonText: {
         type: ControlType.String,
         defaultValue: "Submit application",
