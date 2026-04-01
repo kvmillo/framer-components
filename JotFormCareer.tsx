@@ -371,14 +371,14 @@ export default function JotFormCareer(props: Props) {
                                 >
                                     <path
                                         d="M10 13V5M10 5L7 8M10 5l3 3"
-                                        stroke={resumeFile ? button.bg : input.textColor}
+                                        stroke={fileUpload.iconColor}
                                         strokeWidth="1.5"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                     />
                                     <path
                                         d="M4 16h12"
-                                        stroke={resumeFile ? button.bg : input.textColor}
+                                        stroke={fileUpload.iconColor}
                                         strokeWidth="1.5"
                                         strokeLinecap="round"
                                     />
@@ -629,6 +629,7 @@ interface FileUploadProps {
     borderStyle: "solid" | "dashed" | "dotted"
     iconSize: number
     iconOpacity: number
+    iconColor: string
     icon: string
 }
 
@@ -949,6 +950,11 @@ addPropertyControls(JotFormCareer, {
                 step: 0.05,
                 displayStepper: true,
                 title: "Icon Opacity",
+            },
+            iconColor: {
+                type: ControlType.Color,
+                defaultValue: "#111111",
+                title: "Icon Color",
             },
             paddingV: {
                 type: ControlType.Number,
