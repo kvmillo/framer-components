@@ -121,12 +121,12 @@ export default function JotFormCareer(props: Props) {
     // ─── Button background ────────────────────────────────────────────────────
 
     const isHovered = buttonHovered && status !== "loading"
-    const buttonBg = button.useGradient
-        ? isHovered
-            ? `linear-gradient(${button.gradientAngle}deg, ${button.gradientHoverFrom}, ${button.gradientHoverTo})`
-            : `linear-gradient(${button.gradientAngle}deg, ${button.gradientFrom}, ${button.gradientTo})`
-        : isHovered ? button.hoverBg : button.bg
-    const buttonFilter = undefined
+    const buttonBaseBg = button.useGradient
+        ? `linear-gradient(${button.gradientAngle}deg, ${button.gradientFrom}, ${button.gradientTo})`
+        : button.bg
+    const buttonHoverBg = button.useGradient
+        ? `linear-gradient(${button.gradientAngle}deg, ${button.gradientHoverFrom}, ${button.gradientHoverTo})`
+        : button.hoverBg
 
     // ─── Shared style helpers ─────────────────────────────────────────────────
 
@@ -515,14 +515,14 @@ export default function JotFormCareer(props: Props) {
                         onMouseEnter={() => startTransition(() => setButtonHovered(true))}
                         onMouseLeave={() => startTransition(() => setButtonHovered(false))}
                         style={{
+                            position: "relative",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             gap: 8,
                             width: button.width === "fill" ? "100%" : "auto",
                             padding: `${button.paddingV}px ${button.paddingH}px`,
-                            background: buttonBg,
-                            filter: buttonFilter,
+                            background: buttonBaseBg,
                             color: button.textColor,
                             border: button.borderWidth > 0
                                 ? `${button.borderWidth}px solid ${button.borderColor}`
@@ -530,30 +530,45 @@ export default function JotFormCareer(props: Props) {
                             borderRadius: button.borderRadius,
                             cursor: status === "loading" ? "wait" : "pointer",
                             opacity: status === "loading" ? 0.7 : 1,
-                            transition: "background 0.15s ease, filter 0.15s ease, opacity 0.15s ease",
+                            overflow: "hidden",
+                            transition: "opacity 0.15s ease",
                             ...button.font,
                         }}
                     >
-                        {status === "loading" ? (
-                            <>
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 16 16"
-                                    fill="none"
-                                    style={{ animation: "jfca-spin 0.8s linear infinite" }}
-                                >
-                                    <circle cx="8" cy="8" r="6" stroke={button.textColor} strokeWidth="2" strokeOpacity="0.3" />
-                                    <path d="M8 2a6 6 0 0 1 6 6" stroke={button.textColor} strokeWidth="2" strokeLinecap="round" />
-                                </svg>
-                                <style>{`@keyframes jfca-spin { to { transform: rotate(360deg); } }`}</style>
-                                Sending…
-                            </>
-                        ) : status === "error" ? (
-                            "Something went wrong — try again"
-                        ) : (
-                            submitButtonText
-                        )}
+                        {/* Hover overlay */}
+                        <span
+                            style={{
+                                position: "absolute",
+                                inset: 0,
+                                background: buttonHoverBg,
+                                opacity: isHovered ? 1 : 0,
+                                transition: "opacity 0.2s ease",
+                                pointerEvents: "none",
+                            }}
+                        />
+                        {/* Content above overlay */}
+                        <span style={{ position: "relative", display: "flex", alignItems: "center", gap: 8 }}>
+                            {status === "loading" ? (
+                                <>
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 16 16"
+                                        fill="none"
+                                        style={{ animation: "jfca-spin 0.8s linear infinite" }}
+                                    >
+                                        <circle cx="8" cy="8" r="6" stroke={button.textColor} strokeWidth="2" strokeOpacity="0.3" />
+                                        <path d="M8 2a6 6 0 0 1 6 6" stroke={button.textColor} strokeWidth="2" strokeLinecap="round" />
+                                    </svg>
+                                    <style>{`@keyframes jfca-spin { to { transform: rotate(360deg); } }`}</style>
+                                    Sending…
+                                </>
+                            ) : status === "error" ? (
+                                "Something went wrong — try again"
+                            ) : (
+                                submitButtonText
+                            )}
+                        </span>
                     </button>
 
                 </form>
