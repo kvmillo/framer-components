@@ -37,10 +37,6 @@ export function withDomainExpertiseTab(Component: ComponentType): ComponentType 
                     activeId = instanceId.current
                     notify()
                 }}
-                onHoverEnd={() => {
-                    activeId = null
-                    notify()
-                }}
             />
         )
     }
