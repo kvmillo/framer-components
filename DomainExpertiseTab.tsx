@@ -13,26 +13,39 @@ function notify() {
     subscribers.forEach((fn) => fn())
 }
 
+// Desktop ≥ 1360px, Tablet 810–1359px, Phone < 810px → "Mobile" variant
+function getPrefix(): "Desktop" | "Tablet" | "Mobile" {
+    if (typeof window === "undefined") return "Desktop"
+    if (window.innerWidth >= 1360) return "Desktop"
+    if (window.innerWidth >= 810) return "Tablet"
+    return "Mobile"
+}
+
 export function withDomainExpertiseTab(Component: ComponentType): ComponentType {
     return (props: any) => {
-        // Stable unique ID per instance, created once on mount
         const instanceId = useRef(Symbol())
         const [isActive, setIsActive] = useState(false)
+        const [prefix, setPrefix] = useState<"Desktop" | "Tablet" | "Mobile">("Desktop")
 
         useEffect(() => {
-            const update = () => {
-                setIsActive(activeId === instanceId.current)
-            }
-            subscribers.add(update)
+            setPrefix(getPrefix())
+
+            const onActiveChange = () => setIsActive(activeId === instanceId.current)
+            const onResize = () => setPrefix(getPrefix())
+
+            subscribers.add(onActiveChange)
+            window.addEventListener("resize", onResize)
+
             return () => {
-                subscribers.delete(update)
+                subscribers.delete(onActiveChange)
+                window.removeEventListener("resize", onResize)
             }
         }, [])
 
         return (
             <Component
                 {...props}
-                variant={isActive ? "Desktop Active" : "Desktop Inactive"}
+                variant={isActive ? `${prefix} Active` : `${prefix} Inactive`}
                 onHoverStart={() => {
                     activeId = instanceId.current
                     notify()
