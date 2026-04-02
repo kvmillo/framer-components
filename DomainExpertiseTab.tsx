@@ -24,22 +24,25 @@ function getPrefix(): "Desktop" | "Tablet" | "Mobile" {
 export function withDomainExpertiseTab(Component: ComponentType): ComponentType {
     return (props: any) => {
         const instanceId = useRef(Symbol())
-        const [isActive, setIsActive] = useState(false)
+
+        // Synchronously on first render: first instance to mount claims activeId
+        const [isActive, setIsActive] = useState(() => {
+            if (activeId === null) {
+                activeId = instanceId.current
+                return true
+            }
+            return false
+        })
+
         const [prefix, setPrefix] = useState<"Desktop" | "Tablet" | "Mobile">("Desktop")
 
         useEffect(() => {
             setPrefix(getPrefix())
 
-            // If this instance's variant is already Active on load, claim the activeId
-            if (typeof props.variant === "string" && props.variant.includes("Active")) {
-                activeId = instanceId.current
-            }
-
             const onActiveChange = () => setIsActive(activeId === instanceId.current)
             const onResize = () => setPrefix(getPrefix())
 
             subscribers.add(onActiveChange)
-            onActiveChange() // sync initial state after potentially claiming activeId
             window.addEventListener("resize", onResize)
 
             return () => {
