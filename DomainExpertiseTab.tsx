@@ -30,10 +30,16 @@ export function withDomainExpertiseTab(Component: ComponentType): ComponentType 
         useEffect(() => {
             setPrefix(getPrefix())
 
+            // If this instance's variant is already Active on load, claim the activeId
+            if (typeof props.variant === "string" && props.variant.includes("Active")) {
+                activeId = instanceId.current
+            }
+
             const onActiveChange = () => setIsActive(activeId === instanceId.current)
             const onResize = () => setPrefix(getPrefix())
 
             subscribers.add(onActiveChange)
+            onActiveChange() // sync initial state after potentially claiming activeId
             window.addEventListener("resize", onResize)
 
             return () => {
