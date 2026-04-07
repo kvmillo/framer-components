@@ -113,6 +113,9 @@ export default function BetterCarousel(props: CarouselProps) {
         React.useState<SplideInstance>(null)
     const splideInstanceRef = React.useRef<SplideInstance>(null)
     const [isDragging, setIsDragging] = React.useState(false)
+    // Stable ref so wheel/drag effects always read the latest dragMode
+    const dragModeRef = React.useRef(dragMode)
+    React.useEffect(() => { dragModeRef.current = dragMode }, [dragMode])
     const [canGoPrev, setCanGoPrev] = React.useState(true)
     const [canGoNext, setCanGoNext] = React.useState(true)
     const [progressState, setProgressState] = React.useState({
@@ -225,19 +228,21 @@ export default function BetterCarousel(props: CarouselProps) {
                 if (Math.abs(displacement) < 0.5 && Math.abs(velocity) < 5) {
                     springRafId = null
                     M.translate(targetPos)
-                    // Restore transition so Splide can animate the final snap
                     const listEl = el?.querySelector(".splide__list") as HTMLElement | null
                     if (listEl) listEl.style.transition = ""
-                    let closestIndex = 0
-                    let closestDist = Infinity
-                    for (let i = 0; i < s.length; i++) {
-                        const dist = Math.abs(targetPos - M.toPosition(i, true))
-                        if (dist < closestDist) {
-                            closestDist = dist
-                            closestIndex = i
+                    // In free mode just stop at the boundary — no slide snap
+                    if (dragModeRef.current !== "free") {
+                        let closestIndex = 0
+                        let closestDist = Infinity
+                        for (let i = 0; i < s.length; i++) {
+                            const dist = Math.abs(targetPos - M.toPosition(i, true))
+                            if (dist < closestDist) {
+                                closestDist = dist
+                                closestIndex = i
+                            }
                         }
+                        s.Components.Controller.go(closestIndex, true)
                     }
-                    s.Components.Controller.go(closestIndex, true)
                 } else {
                     springRafId = requestAnimationFrame(frame)
                 }
@@ -329,10 +334,13 @@ export default function BetterCarousel(props: CarouselProps) {
                     }
                 }
 
-                // Restore transition so Splide can animate the snap
+                // Restore transition for future animations
                 if (list) list.style.transition = ""
 
-                // Normal snap to nearest slide
+                // In free mode just stop — no slide snap
+                if (dragModeRef.current === "free") return
+
+                // Snap mode: animate to nearest slide
                 let closestIndex = 0
                 let closestDist = Infinity
                 for (let i = 0; i < s.length; i++) {
@@ -356,6 +364,60 @@ export default function BetterCarousel(props: CarouselProps) {
             cancelSpring()
         }
     }, [wheelScrollEnabled, splideInstance])
+
+    // Prevent Splide from snapping to a slide after touch drag ends in free mode.
+    // Splide fires `dragged`, then posts a rAF to animate to the nearest slide.
+    // We synchronously clamp the position, then hold it across several frames to
+    // outlast Splide's rAF chain — no flicker because all rAFs in a given vsync
+    // interval resolve before the browser paints.
+    React.useEffect(() => {
+        if (!splideInstance || dragMode !== "free") return
+
+        let cancelHold = false
+
+        const preventSnap = () => {
+            const M = splideInstance.Components?.Move
+            const list = splideRef.current?.querySelector(".splide__list") as HTMLElement | null
+            if (!M || !list) return
+
+            // Read live visual position via DOMMatrix
+            let pos = M.getPosition()
+            const t = getComputedStyle(list).transform
+            if (t && t !== "none") pos = new DOMMatrix(t).m41
+
+            const p0 = M.toPosition(0, true)
+            const pLast = M.toPosition(splideInstance.length - 1, true)
+            const lo = Math.min(p0, pLast)
+            const hi = Math.max(p0, pLast)
+            const clampedPos = Math.max(lo, Math.min(hi, pos))
+
+            // Synchronous override (runs before any rAF this tick)
+            list.style.transition = "none"
+            M.translate(clampedPos)
+
+            // Hold across frames to outlast Splide's rAF animation chain
+            cancelHold = false
+            let frames = 0
+            const hold = () => {
+                if (cancelHold) return
+                list.style.transition = "none"
+                M.translate(clampedPos)
+                if (++frames < 8) requestAnimationFrame(hold)
+            }
+            requestAnimationFrame(hold)
+        }
+
+        // Cancel the hold if the user starts a new drag
+        const onDragStart = () => { cancelHold = true }
+
+        splideInstance.on("dragged", preventSnap)
+        splideInstance.on("drag", onDragStart)
+        return () => {
+            splideInstance.off("dragged", preventSnap)
+            splideInstance.off("drag", onDragStart)
+            cancelHold = true
+        }
+    }, [splideInstance, dragMode])
 
     const isLastFullyVisible = React.useCallback((): boolean => {
         try {
