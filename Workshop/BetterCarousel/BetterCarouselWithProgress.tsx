@@ -507,15 +507,38 @@ export default function BetterCarousel(props: CarouselProps) {
         updateArrowState()
         recomputeProgress()
 
+        // Full update: arrow state + progress (includes getBoundingClientRect)
         const cb = () => {
             updateArrowState()
             recomputeProgress()
         }
 
+        // Cheap scroll callback — position math only, no DOM reads.
+        // Used for the high-frequency scroll event during free drag so we
+        // don't trigger forced reflows on every animation frame.
+        const scrollCb = () => {
+            const isFree = splideInstance.options.drag === "free"
+            if (!isFree) return
+            const M = splideInstance.Components?.Move
+            if (!M) return
+            let end = 0
+            try { end = splideInstance.Components.Controller.getEnd() } catch {}
+            const pos = M.getPosition()
+            let idx = 0, closestDist = Infinity
+            for (let i = 0; i < splideInstance.length; i++) {
+                const dist = Math.abs(pos - M.toPosition(i, true))
+                if (dist < closestDist) { closestDist = dist; idx = i }
+            }
+            const step = Math.min(idx, end)
+            setProgressState(p =>
+                p.step === step && p.steps === end + 1 ? p : { step, steps: end + 1 }
+            )
+        }
+
         splideInstance.on("mounted", cb)
         splideInstance.on("move", cb)
         splideInstance.on("moved", cb)
-        splideInstance.on("scroll", cb)
+        splideInstance.on("scroll", scrollCb)
         splideInstance.on("resized", cb)
         splideInstance.on("updated", cb)
 
@@ -523,7 +546,7 @@ export default function BetterCarousel(props: CarouselProps) {
             splideInstance.off("mounted", cb)
             splideInstance.off("move", cb)
             splideInstance.off("moved", cb)
-            splideInstance.off("scroll", cb)
+            splideInstance.off("scroll", scrollCb)
             splideInstance.off("resized", cb)
             splideInstance.off("updated", cb)
         }
