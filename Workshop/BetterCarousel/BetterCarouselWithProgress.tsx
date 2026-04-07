@@ -452,8 +452,24 @@ export default function BetterCarousel(props: CarouselProps) {
             end = Math.max(0, splideInstance.length - perPage)
         }
 
-        const idx: number = splideInstance.index
         const atEndByView = isLastFullyVisible()
+
+        // In free drag mode derive the active index from visual position so
+        // dots update continuously while dragging, not only on release.
+        let idx: number = splideInstance.index
+        const isFree = splideInstance.options.drag === "free"
+        if (isFree) {
+            const M = splideInstance.Components?.Move
+            if (M) {
+                const pos = M.getPosition()
+                let closestDist = Infinity
+                for (let i = 0; i < splideInstance.length; i++) {
+                    const dist = Math.abs(pos - M.toPosition(i, true))
+                    if (dist < closestDist) { closestDist = dist; idx = i }
+                }
+            }
+        }
+
         const step = atEndByView ? end : Math.min(idx, end)
         setProgressState({ step, steps: end + 1 })
     }, [splideInstance, isLastFullyVisible])
@@ -499,6 +515,7 @@ export default function BetterCarousel(props: CarouselProps) {
         splideInstance.on("mounted", cb)
         splideInstance.on("move", cb)
         splideInstance.on("moved", cb)
+        splideInstance.on("scroll", cb)
         splideInstance.on("resized", cb)
         splideInstance.on("updated", cb)
 
@@ -506,6 +523,7 @@ export default function BetterCarousel(props: CarouselProps) {
             splideInstance.off("mounted", cb)
             splideInstance.off("move", cb)
             splideInstance.off("moved", cb)
+            splideInstance.off("scroll", cb)
             splideInstance.off("resized", cb)
             splideInstance.off("updated", cb)
         }
