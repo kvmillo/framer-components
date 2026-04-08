@@ -817,6 +817,7 @@ export default function BetterCarousel(props: CarouselProps) {
                     }).map((_, i) => (
                         <div
                             key={i}
+                            onClick={() => splideInstance?.go(i)}
                             style={{
                                 width:
                                     i === progressState.step
@@ -829,6 +830,7 @@ export default function BetterCarousel(props: CarouselProps) {
                                         ? progressIndicator.activeColor
                                         : progressIndicator.inactiveColor,
                                 transition: "all 0.3s ease",
+                                cursor: "pointer",
                             }}
                         />
                     ))}
