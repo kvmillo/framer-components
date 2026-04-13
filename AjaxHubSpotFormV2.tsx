@@ -409,6 +409,6 @@ addPropertyControls(AjaxHubSpotFormV2, {
     fullWidthButton: {
         type: ControlType.Boolean,
         title: "Full Width Button",
-        defaultValue: false,
+        defaultValue: true,
     },
 })
