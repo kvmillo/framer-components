@@ -190,9 +190,9 @@ export default function AjaxHubSpotFormV2(props) {
                 const isQualifiedBilling = QUALIFIED_BILLING.includes(billingSystem)
                 const isSmallFirm = SMALL_FIRM_SIZES.includes(firmSize)
                 let destination: string
-                if (isQualifiedBilling && !isSmallFirm) destination = "https://joinajax.com/book-a-demo"
-                else if (isQualifiedBilling && isSmallFirm) destination = "https://joinajax.com/express-waitlist"
-                else destination = "https://joinajax.com/billing-system-waitlist"
+                if (isQualifiedBilling && !isSmallFirm) destination = "/book-a-demo"
+                else if (isQualifiedBilling && isSmallFirm) destination = "/express-waitlist"
+                else destination = "/billing-system-waitlist"
                 try { localStorage.setItem("ajax_last_email", email); sessionStorage.setItem("ajax_last_email", email) } catch (e) {}
                 window.location.href = destination
             } else {
