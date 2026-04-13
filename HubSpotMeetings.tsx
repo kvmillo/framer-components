@@ -166,6 +166,10 @@ export default function HubSpotMeetings(props) {
             const iframe = containerRef.current?.querySelector("iframe")
             if (iframe) {
                 observer.disconnect()
+                // Force full width via JS after HubSpot injects the iframe
+                iframe.style.width = "100%"
+                iframe.style.maxWidth = "100%"
+                iframe.removeAttribute("width")
                 const onLoad = () => {
                     // Wait 1.2s after iframe load before fading skeleton
                     setTimeout(() => setLoaded(true), 1200)
@@ -194,11 +198,6 @@ export default function HubSpotMeetings(props) {
                 @keyframes skeletonShimmer {
                     0% { background-position: 200% 0; }
                     100% { background-position: -200% 0; }
-                }
-                .meetings-iframe-container iframe {
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    min-width: 100% !important;
                 }
             `}</style>
 
