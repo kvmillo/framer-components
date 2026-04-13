@@ -195,6 +195,11 @@ export default function HubSpotMeetings(props) {
                     0% { background-position: 200% 0; }
                     100% { background-position: -200% 0; }
                 }
+                .meetings-iframe-container iframe {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: 100% !important;
+                }
             `}</style>
 
             {/* Skeleton */}
