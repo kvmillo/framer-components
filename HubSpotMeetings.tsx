@@ -1,26 +1,25 @@
 // Framer Code Component — HubSpot Meetings Embed with Skeleton Loader
-// Reads ajax_last_email from localStorage/sessionStorage to prefill email
 
 import { useState, useEffect, useRef } from "react"
 import { addPropertyControls, ControlType } from "framer"
 
-const SKELETON_COLOR = "rgba(0,0,0,0.07)"
-const SKELETON_SHINE = "rgba(0,0,0,0.04)"
+const PURPLE = "#3804E6"
+const SHIMMER = `linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 75%)`
+const SHIMMER_LIGHT = `linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.03) 50%, rgba(0,0,0,0.06) 75%)`
 
-function SkeletonBlock({ width = "100%", height = 16, radius = 6, style = {} }: {
-    width?: string | number
-    height?: number
-    radius?: number
-    style?: React.CSSProperties
+const shimmerStyle = (dark: boolean): React.CSSProperties => ({
+    background: dark ? SHIMMER : SHIMMER_LIGHT,
+    backgroundSize: "200% 100%",
+    animation: "skeletonShimmer 1.6s ease infinite",
+})
+
+function Block({ w = "100%", h = 14, r = 6, dark = false, style = {} }: {
+    w?: string | number; h?: number; r?: number; dark?: boolean; style?: React.CSSProperties
 }) {
     return (
         <div style={{
-            width,
-            height,
-            borderRadius: radius,
-            background: `linear-gradient(90deg, ${SKELETON_COLOR} 25%, ${SKELETON_SHINE} 50%, ${SKELETON_COLOR} 75%)`,
-            backgroundSize: "200% 100%",
-            animation: "skeletonShimmer 1.4s ease infinite",
+            width: w, height: h, borderRadius: r,
+            ...shimmerStyle(dark),
             flexShrink: 0,
             ...style,
         }} />
@@ -28,75 +27,102 @@ function SkeletonBlock({ width = "100%", height = 16, radius = 6, style = {} }: 
 }
 
 function MeetingsSkeleton() {
+    const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+
     return (
-        <div style={{
-            width: "100%",
-            height: "100%",
-            padding: "32px 24px",
-            boxSizing: "border-box",
-            display: "flex",
-            flexDirection: "column",
-            gap: 24,
-        }}>
-            {/* Host info */}
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", width: "100%", height: "100%", overflow: "hidden", borderRadius: 8 }}>
+            {/* Left — purple calendar panel */}
+            <div style={{
+                width: "52%",
+                background: PURPLE,
+                padding: "32px 24px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 20,
+                boxSizing: "border-box",
+            }}>
+                {/* Avatar */}
                 <div style={{
-                    width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
-                    background: SKELETON_COLOR,
-                    animation: "skeletonShimmer 1.4s ease infinite",
-                    backgroundSize: "200% 100%",
+                    width: 72, height: 72, borderRadius: "50%",
+                    background: "rgba(255,255,255,0.2)",
+                    ...shimmerStyle(true),
                 }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                    <SkeletonBlock width="40%" height={14} />
-                    <SkeletonBlock width="60%" height={12} />
+
+                {/* Title */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", alignItems: "center" }}>
+                    <Block w="80%" h={14} r={6} dark />
+                    <Block w="60%" h={14} r={6} dark />
+                </div>
+
+                {/* Month nav */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                    <Block w={20} h={20} r={4} dark />
+                    <Block w="45%" h={18} r={6} dark />
+                    <Block w={20} h={20} r={4} dark />
+                </div>
+
+                {/* Day labels */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, width: "100%" }}>
+                    {days.map((d) => (
+                        <div key={d} style={{
+                            height: 12, borderRadius: 4,
+                            background: "rgba(255,255,255,0.25)",
+                        }} />
+                    ))}
+                </div>
+
+                {/* Calendar grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, width: "100%" }}>
+                    {Array.from({ length: 35 }).map((_, i) => {
+                        const col = i % 7
+                        const isEmpty = col === 0 || col === 6 || i < 3 || i > 30
+                        return (
+                            <div key={i} style={{
+                                height: 30,
+                                borderRadius: 50,
+                                background: isEmpty ? "transparent" : "rgba(255,255,255,0.15)",
+                                ...(isEmpty ? {} : shimmerStyle(true)),
+                            }} />
+                        )
+                    })}
                 </div>
             </div>
 
-            {/* Meeting title + duration */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <SkeletonBlock width="70%" height={20} radius={6} />
-                <SkeletonBlock width="30%" height={13} radius={6} />
-            </div>
+            {/* Right — white time panel */}
+            <div style={{
+                flex: 1,
+                background: "#fff",
+                padding: "32px 20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 24,
+                boxSizing: "border-box",
+            }}>
+                {/* Meeting location */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <Block w="55%" h={14} r={5} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Block w={14} h={14} r={3} />
+                        <Block w="30%" h={12} r={5} />
+                    </div>
+                </div>
 
-            {/* Divider */}
-            <div style={{ height: 1, background: SKELETON_COLOR }} />
+                {/* Meeting duration */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <Block w="55%" h={14} r={5} />
+                    <Block w="100%" h={40} r={8} />
+                </div>
 
-            {/* Calendar header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <SkeletonBlock width={20} height={20} radius={4} />
-                <SkeletonBlock width="35%" height={16} radius={6} />
-                <SkeletonBlock width={20} height={20} radius={4} />
-            </div>
-
-            {/* Day labels */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
-                {Array.from({ length: 7 }).map((_, i) => (
-                    <SkeletonBlock key={i} height={12} radius={4} />
-                ))}
-            </div>
-
-            {/* Calendar grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
-                {Array.from({ length: 35 }).map((_, i) => (
-                    <div key={i} style={{
-                        height: 32,
-                        borderRadius: 6,
-                        background: i % 7 === 0 || i % 7 === 6 || i < 2 || i > 29
-                            ? "transparent"
-                            : SKELETON_COLOR,
-                        animation: i % 7 === 0 || i % 7 === 6 || i < 2 || i > 29
-                            ? "none"
-                            : "skeletonShimmer 1.4s ease infinite",
-                        backgroundSize: "200% 100%",
-                    }} />
-                ))}
-            </div>
-
-            {/* Time slots */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {Array.from({ length: 4 }).map((_, i) => (
-                    <SkeletonBlock key={i} height={40} radius={8} width="100%" />
-                ))}
+                {/* Time slots */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <Block w="65%" h={14} r={5} />
+                    <Block w="50%" h={12} r={5} />
+                    <div style={{ height: 8 }} />
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <Block key={i} w="100%" h={44} r={8} />
+                    ))}
+                </div>
             </div>
         </div>
     )
@@ -106,18 +132,15 @@ export default function HubSpotMeetings(props) {
     const { meetingUrl, height } = props
     const [loaded, setLoaded] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
-    const scriptRef = useRef<HTMLScriptElement | null>(null)
 
     useEffect(() => {
         if (!meetingUrl) return
 
-        // Read prefill email
         let email = ""
         try {
             email = localStorage.getItem("ajax_last_email") || sessionStorage.getItem("ajax_last_email") || ""
         } catch (e) {}
 
-        // Build URL with email prefill
         let finalUrl = meetingUrl
         try {
             const u = new URL(meetingUrl)
@@ -125,34 +148,30 @@ export default function HubSpotMeetings(props) {
             finalUrl = u.toString()
         } catch (e) {}
 
-        // Set data-src on container
         if (containerRef.current) {
             containerRef.current.setAttribute("data-src", finalUrl)
         }
 
-        // Load HubSpot embed script
         if (!document.querySelector('script[src*="MeetingsEmbedCode"]')) {
             const script = document.createElement("script")
             script.src = "https://static.hsappstatic.net/MeetingsEmbed/ex/MeetingsEmbedCode.js"
             script.type = "text/javascript"
             script.async = true
             document.body.appendChild(script)
-            scriptRef.current = script
-        } else {
-            // Script already loaded — re-init if HubSpot exposes it
-            if ((window as any).HubSpotConversations?.widget?.refresh) {
-                (window as any).HubSpotConversations.widget.refresh()
-            }
         }
 
-        // Watch for the iframe to appear and fire onload
+        // Watch for iframe and add extra delay after load event
+        // so HubSpot has time to render content inside the iframe
         const observer = new MutationObserver(() => {
             const iframe = containerRef.current?.querySelector("iframe")
             if (iframe) {
                 observer.disconnect()
-                iframe.addEventListener("load", () => setLoaded(true))
-                // Fallback: if already loaded
-                if (iframe.contentDocument?.readyState === "complete") setLoaded(true)
+                const onLoad = () => {
+                    // Wait 1.2s after iframe load before fading skeleton
+                    setTimeout(() => setLoaded(true), 1200)
+                }
+                iframe.addEventListener("load", onLoad)
+                if ((iframe as any).complete) onLoad()
             }
         })
 
@@ -160,8 +179,8 @@ export default function HubSpotMeetings(props) {
             observer.observe(containerRef.current, { childList: true, subtree: true })
         }
 
-        // Fallback timeout — show iframe after 8s regardless
-        const fallback = setTimeout(() => setLoaded(true), 8000)
+        // Hard fallback at 15s
+        const fallback = setTimeout(() => setLoaded(true), 15000)
 
         return () => {
             observer.disconnect()
@@ -178,12 +197,12 @@ export default function HubSpotMeetings(props) {
                 }
             `}</style>
 
-            {/* Skeleton — shown until iframe loads */}
+            {/* Skeleton */}
             <div style={{
                 position: "absolute",
                 inset: 0,
                 opacity: loaded ? 0 : 1,
-                transition: "opacity 0.4s ease",
+                transition: "opacity 0.6s ease",
                 pointerEvents: loaded ? "none" : "auto",
                 zIndex: 1,
             }}>
@@ -196,7 +215,7 @@ export default function HubSpotMeetings(props) {
                 height: "calc(100% + 40px)",
                 marginTop: -40,
                 opacity: loaded ? 1 : 0,
-                transition: "opacity 0.4s ease",
+                transition: "opacity 0.6s ease",
             }}>
                 <div
                     ref={containerRef}
