@@ -399,60 +399,43 @@ export default function AjaxHubSpotFormV2(props) {
 
             {/* ── Modal overlay ── */}
             {showModal && (
-                <div
-                    onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal() }}
-                    style={{
-                        position: "fixed", inset: 0, zIndex: 99999,
-                        background: "rgba(0, 0, 0, 0.65)",
-                        backdropFilter: "blur(6px)",
-                        WebkitBackdropFilter: "blur(6px)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        padding: "24px",
-                        boxSizing: "border-box",
-                    }}
-                >
-                    <div style={{
-                        position: "relative",
-                        width: "100%", maxWidth: 900,
-                        height: Math.min(meetingsHeight, typeof window !== "undefined" ? window.innerHeight - 48 : meetingsHeight),
-                        borderRadius: 12,
-                        overflow: "hidden",
-                        boxShadow: "0 24px 80px rgba(0,0,0,0.4)",
-                        background: "#fff",
-                    }}>
-                        {/* Close button */}
-                        <button
-                            onClick={handleCloseModal}
-                            style={{
-                                position: "absolute", top: 12, right: 12, zIndex: 10,
-                                width: 32, height: 32, borderRadius: "50%",
-                                background: "rgba(0,0,0,0.12)", border: "none",
-                                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 14, color: "#333", lineHeight: 1,
-                            }}
-                        >✕</button>
+                <div style={{
+                    position: "fixed", inset: 0, zIndex: 20,
+                    background: "#fff",
+                    overflow: "hidden",
+                }}>
+                    {/* Close button */}
+                    <button
+                        onClick={handleCloseModal}
+                        style={{
+                            position: "absolute", top: 16, right: 16, zIndex: 21,
+                            width: 36, height: 36, borderRadius: "50%",
+                            background: "rgba(0,0,0,0.12)", border: "none",
+                            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 16, color: "#333", lineHeight: 1,
+                        }}
+                    >✕</button>
 
-                        {/* Skeleton shown while iframe loads */}
-                        {!modalReady && (
-                            <div style={{ position: "absolute", inset: 0 }}>
-                                <MeetingsSkeleton height={meetingsHeight} />
-                            </div>
-                        )}
-
-                        {/* HubSpot meetings iframe — email pre-filled in src */}
-                        <div style={{
-                            width: "100%",
-                            height: "calc(100% + 40px)",
-                            marginTop: -40,
-                            opacity: modalReady ? 1 : 0,
-                            transition: "opacity 0.4s ease",
-                        }}>
-                            <iframe
-                                src={modalSrc || ""}
-                                onLoad={() => setTimeout(() => setModalReady(true), 800)}
-                                style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                            />
+                    {/* Skeleton shown while iframe loads */}
+                    {!modalReady && (
+                        <div style={{ position: "absolute", inset: 0 }}>
+                            <MeetingsSkeleton height={typeof window !== "undefined" ? window.innerHeight : meetingsHeight} />
                         </div>
+                    )}
+
+                    {/* HubSpot meetings iframe — email pre-filled in src */}
+                    <div style={{
+                        width: "100%",
+                        height: "calc(100% + 40px)",
+                        marginTop: -40,
+                        opacity: modalReady ? 1 : 0,
+                        transition: "opacity 0.4s ease",
+                    }}>
+                        <iframe
+                            src={modalSrc || ""}
+                            onLoad={() => setTimeout(() => setModalReady(true), 800)}
+                            style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                        />
                     </div>
                 </div>
             )}
