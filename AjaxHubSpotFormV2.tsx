@@ -1,7 +1,11 @@
 // Framer Code Component — Ajax HubSpot Form (Direct API) — Book a Meeting Form
 // Portal ID: 23114530 | Form ID: dffb5768-76ae-4357-8350-a3961efd5dc4
+//
+// ✅ Preloads HubSpot meetings embed in background while user fills form
+// ✅ On success (qualified): shows calendar inline instead of redirecting
+// ✅ On success (waitlist): redirects as before
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { addPropertyControls, ControlType } from "framer"
 
 const PORTAL_ID = "23114530"
@@ -23,7 +27,12 @@ const BUTTON_RADIUS = 48
 const FIELD_GAP = 24
 const LABEL_INPUT_GAP = 12
 
-// ── Scoped CSS for placeholder + focus ───────────────────────
+// ── Skeleton colors ───────────────────────────────────────────
+const SK_PURPLE = "#3804E6"
+const SK_SHIMMER_DARK = `linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 75%)`
+const SK_SHIMMER_LIGHT = `linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.03) 50%, rgba(0,0,0,0.06) 75%)`
+
+// ── Scoped CSS ───────────────────────────────────────────────
 const FORM_CLASS = "ajax-hs-form-v2"
 const formCSS = `
 .${FORM_CLASS} input::placeholder {
@@ -37,6 +46,10 @@ const formCSS = `
     outline: none;
     border-color: ${INPUT_FOCUS_BORDER} !important;
     box-shadow: none !important;
+}
+@keyframes skeletonShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 `
 
@@ -73,35 +86,89 @@ const FIRM_SIZES: { label: string; value: string }[] = [
     { label: "500+ Timekeepers", value: "AmLaw 200" },
 ]
 
+// ── Helpers ──────────────────────────────────────────────────
 function getCookie(name: string): string {
     const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
     return match ? decodeURIComponent(match[2]) : ""
 }
-
-function isValidEmail(email: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+function isValidEmail(e: string) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) }
+function isBlockedEmail(e: string) {
+    return FREE_EMAIL_DOMAINS.includes(e.split("@")[1]?.toLowerCase())
 }
-
-function isBlockedEmail(email: string): boolean {
-    const domain = email.split("@")[1]?.toLowerCase()
-    return FREE_EMAIL_DOMAINS.includes(domain)
-}
-
 function captureAndPersistParams(): Record<string, string> {
     const p = new URLSearchParams(window.location.search)
     let stored: Record<string, string> = {}
     try { stored = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "{}") } catch {}
-    const keys = ["utm_source","utm_medium","utm_campaign","utm_term","utm_content","referral_code","seo_source"]
-    keys.forEach((key) => { const val = p.get(key); if (val) stored[key] = val })
+    ["utm_source","utm_medium","utm_campaign","utm_term","utm_content","referral_code","seo_source"]
+        .forEach(k => { const v = p.get(k); if (v) stored[k] = v })
     const ref = p.get("ref") || p.get("referral")
     if (ref && !stored["referral_code"]) stored["referral_code"] = ref
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(stored)) } catch {}
     return stored
 }
 
-export default function AjaxHubSpotFormV2(props) {
-    const { buttonLabel, fullWidthButton } = props
+// ── Skeleton ─────────────────────────────────────────────────
+function SkBlock({ w = "100%", h = 14, r = 6, dark = false }: { w?: string | number; h?: number; r?: number; dark?: boolean }) {
+    return <div style={{
+        width: w, height: h, borderRadius: r, flexShrink: 0,
+        background: dark ? SK_SHIMMER_DARK : SK_SHIMMER_LIGHT,
+        backgroundSize: "200% 100%",
+        animation: "skeletonShimmer 1.6s ease infinite",
+    }} />
+}
 
+function MeetingsSkeleton({ height }: { height: number }) {
+    return (
+        <div style={{ display: "flex", width: "100%", height, overflow: "hidden", borderRadius: 8 }}>
+            {/* Left purple panel */}
+            <div style={{ width: "52%", background: SK_PURPLE, padding: "32px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, boxSizing: "border-box" }}>
+                <div style={{ width: 72, height: 72, borderRadius: "50%", background: SK_SHIMMER_DARK, backgroundSize: "200% 100%", animation: "skeletonShimmer 1.6s ease infinite" }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", alignItems: "center" }}>
+                    <SkBlock w="80%" h={14} dark />
+                    <SkBlock w="60%" h={14} dark />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                    <SkBlock w={20} h={20} r={4} dark />
+                    <SkBlock w="45%" h={18} dark />
+                    <SkBlock w={20} h={20} r={4} dark />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, width: "100%" }}>
+                    {Array.from({ length: 7 }).map((_, i) => <div key={i} style={{ height: 12, borderRadius: 4, background: "rgba(255,255,255,0.25)" }} />)}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, width: "100%" }}>
+                    {Array.from({ length: 35 }).map((_, i) => {
+                        const col = i % 7
+                        const empty = col === 0 || col === 6 || i < 3 || i > 30
+                        return <div key={i} style={{ height: 30, borderRadius: 50, background: empty ? "transparent" : SK_SHIMMER_DARK, backgroundSize: "200% 100%", animation: empty ? "none" : "skeletonShimmer 1.6s ease infinite" }} />
+                    })}
+                </div>
+            </div>
+            {/* Right white panel */}
+            <div style={{ flex: 1, background: "#fff", padding: "32px 20px", display: "flex", flexDirection: "column", gap: 24, boxSizing: "border-box" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <SkBlock w="55%" h={14} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}><SkBlock w={14} h={14} r={3} /><SkBlock w="30%" h={12} /></div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <SkBlock w="55%" h={14} />
+                    <SkBlock w="100%" h={40} r={8} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <SkBlock w="65%" h={14} />
+                    <SkBlock w="50%" h={12} />
+                    <div style={{ height: 8 }} />
+                    {Array.from({ length: 5 }).map((_, i) => <SkBlock key={i} w="100%" h={44} r={8} />)}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ── Component ─────────────────────────────────────────────────
+export default function AjaxHubSpotFormV2(props) {
+    const { buttonLabel, fullWidthButton, meetingUrl, meetingsHeight } = props
+
+    // Form state
     const [email, setEmail] = useState("")
     const [emailError, setEmailError] = useState("")
     const [showExtraFields, setShowExtraFields] = useState(false)
@@ -112,37 +179,51 @@ export default function AjaxHubSpotFormV2(props) {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
     const [submitError, setSubmitError] = useState("")
 
-    useEffect(() => { captureAndPersistParams() }, [])
+    // Meetings state
+    const [showMeetings, setShowMeetings] = useState(false)
+    const [meetingsReady, setMeetingsReady] = useState(false)
+    const meetingsRef = useRef<HTMLDivElement>(null)
 
-    // ── Email validation ─────────────────────────────────────
+    useEffect(() => {
+        captureAndPersistParams()
+
+        // Load HubSpot meetings embed script immediately in background
+        if (meetingUrl && !document.querySelector('script[src*="MeetingsEmbedCode"]')) {
+            const script = document.createElement("script")
+            script.src = "https://static.hsappstatic.net/MeetingsEmbed/ex/MeetingsEmbedCode.js"
+            script.async = true
+            document.body.appendChild(script)
+        }
+
+        // Watch for the meetings iframe to load
+        const observer = new MutationObserver(() => {
+            const iframe = meetingsRef.current?.querySelector("iframe")
+            if (iframe) {
+                observer.disconnect()
+                iframe.addEventListener("load", () => setTimeout(() => setMeetingsReady(true), 1000))
+                setTimeout(() => setMeetingsReady(true), 15000) // hard fallback
+            }
+        })
+        if (meetingsRef.current) {
+            observer.observe(meetingsRef.current, { childList: true, subtree: true })
+        }
+        return () => observer.disconnect()
+    }, [])
+
+    // ── Email validation ──────────────────────────────────────
     const handleEmailBlur = () => {
         if (!email) return
-        if (!isValidEmail(email)) {
-            setEmailError("Please enter a valid email address.")
-            setShowExtraFields(false)
-            return
-        }
-        if (isBlockedEmail(email)) {
-            setEmailError(`Please enter a different email address. This form does not accept addresses from ${email.split("@")[1]}.`)
-            setShowExtraFields(false)
-            return
-        }
+        if (!isValidEmail(email)) { setEmailError("Please enter a valid email address."); setShowExtraFields(false); return }
+        if (isBlockedEmail(email)) { setEmailError(`Please enter a different email address. This form does not accept addresses from ${email.split("@")[1]}.`); setShowExtraFields(false); return }
         setEmailError("")
         setShowExtraFields(true)
     }
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => { setEmail(e.target.value); if (emailError) setEmailError("") }
 
-    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEmail(e.target.value)
-        if (emailError) setEmailError("")
-    }
-
-    // ── Submit ───────────────────────────────────────────────
+    // ── Submit ────────────────────────────────────────────────
     const handleSubmit = async () => {
         if (!isValidEmail(email)) { setEmailError("Please enter a valid email address."); return }
-        if (isBlockedEmail(email)) {
-            setEmailError(`Please enter a different email address. This form does not accept addresses from ${email.split("@")[1]}.`)
-            return
-        }
+        if (isBlockedEmail(email)) { setEmailError(`Please enter a different email address. This form does not accept addresses from ${email.split("@")[1]}.`); return }
         if (!billingSystem) { setSubmitError("Please select a billing system."); return }
         if (billingSystem === "Other" && !billingOther) { setSubmitError("Please enter your billing system."); return }
         if (!firmSize) { setSubmitError("Please select your firm size."); return }
@@ -167,15 +248,11 @@ export default function AjaxHubSpotFormV2(props) {
             { name: "utm_content", value: tracked.utm_content || "" },
             { name: "referral_code", value: tracked.referral_code || "" },
             { name: "seo_source", value: tracked.seo_source || "" },
-        ].filter((f) => f.value !== "")
+        ].filter(f => f.value !== "")
 
         const payload: any = {
             fields: hsFields,
-            context: {
-                pageUri: window.location.href,
-                pageName: document.title,
-                ...(hutk ? { hutk } : {}),
-            },
+            context: { pageUri: window.location.href, pageName: document.title, ...(hutk ? { hutk } : {}) },
         }
 
         try {
@@ -185,16 +262,22 @@ export default function AjaxHubSpotFormV2(props) {
             )
             if (res.ok) {
                 try { sessionStorage.removeItem(SESSION_KEY) } catch {}
+                try { localStorage.setItem("ajax_last_email", email); sessionStorage.setItem("ajax_last_email", email) } catch {}
+
                 const QUALIFIED_BILLING = ["Clio","MyCase","SurePoint LMS","SurePoint Coyote","Practice Panther","FileVine"]
                 const SMALL_FIRM_SIZES = ["Solo","Small (1-5 TKs)"]
                 const isQualifiedBilling = QUALIFIED_BILLING.includes(billingSystem)
                 const isSmallFirm = SMALL_FIRM_SIZES.includes(firmSize)
-                let destination: string
-                if (isQualifiedBilling && !isSmallFirm) destination = "/book-a-demo"
-                else if (isQualifiedBilling && isSmallFirm) destination = "/express-waitlist"
-                else destination = "/billing-system-waitlist"
-                try { localStorage.setItem("ajax_last_email", email); sessionStorage.setItem("ajax_last_email", email) } catch (e) {}
-                window.location.href = destination
+
+                if (isQualifiedBilling && !isSmallFirm) {
+                    // Show inline calendar instead of redirecting
+                    setStatus("success")
+                    setShowMeetings(true)
+                } else if (isQualifiedBilling && isSmallFirm) {
+                    window.location.href = "/express-waitlist"
+                } else {
+                    window.location.href = "/billing-system-waitlist"
+                }
             } else {
                 const data = await res.json()
                 setSubmitError(data?.errors?.[0]?.message || "Submission failed. Please try again.")
@@ -206,123 +289,65 @@ export default function AjaxHubSpotFormV2(props) {
         }
     }
 
-    // ── Shared styles ────────────────────────────────────────
+    // ── Styles ────────────────────────────────────────────────
     const inputStyle: React.CSSProperties = {
-        width: "100%",
-        padding: "12px 16px",
-        fontSize: FONT_SIZE,
-        lineHeight: "1.5em",
-        fontFamily: "'Inter', sans-serif",
-        color: INPUT_COLOR,
-        background: INPUT_BG,
-        border: `1px solid ${INPUT_BORDER}`,
-        borderRadius: INPUT_RADIUS,
-        outline: "none",
-        boxSizing: "border-box",
-        transition: "border-color 0.15s",
-        appearance: "none" as any,
+        width: "100%", padding: "12px 16px", fontSize: FONT_SIZE, lineHeight: "1.5em",
+        fontFamily: "'Inter', sans-serif", color: INPUT_COLOR, background: INPUT_BG,
+        border: `1px solid ${INPUT_BORDER}`, borderRadius: INPUT_RADIUS,
+        outline: "none", boxSizing: "border-box", transition: "border-color 0.15s", appearance: "none" as any,
     }
-
     const labelStyle: React.CSSProperties = {
-        display: "block",
-        fontSize: FONT_SIZE,
-        lineHeight: "1em",
-        fontWeight: 400,
-        fontFamily: "'Inter', sans-serif",
-        color: LABEL_COLOR,
-        marginBottom: LABEL_INPUT_GAP,
+        display: "block", fontSize: FONT_SIZE, lineHeight: "1em", fontWeight: 400,
+        fontFamily: "'Inter', sans-serif", color: LABEL_COLOR, marginBottom: LABEL_INPUT_GAP,
     }
-
     const fieldWrap: React.CSSProperties = { marginBottom: FIELD_GAP }
-
     const DropdownArrow = () => (
-        <div style={{
-            position: "absolute", right: 14, top: "50%",
-            transform: "translateY(-50%)", pointerEvents: "none",
-            color: PLACEHOLDER_COLOR, fontSize: 11,
-        }}>▼</div>
+        <div style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: PLACEHOLDER_COLOR, fontSize: 11 }}>▼</div>
     )
-
     const buttonBase: React.CSSProperties = {
-        width: fullWidthButton ? "100%" : "auto",
-        padding: "12px 24px",
+        width: fullWidthButton ? "100%" : "auto", padding: "12px 24px",
         background: status === "loading" ? "#888" : BUTTON_COLOR,
-        color: "#ffffff",
-        fontSize: FONT_SIZE,
-        fontWeight: 500,
-        lineHeight: "1.5em",
-        fontFamily: "'Inter', sans-serif",
-        border: "none",
-        borderRadius: BUTTON_RADIUS,
+        color: "#ffffff", fontSize: FONT_SIZE, fontWeight: 500, lineHeight: "1.5em",
+        fontFamily: "'Inter', sans-serif", border: "none", borderRadius: BUTTON_RADIUS,
         cursor: status === "loading" ? "not-allowed" : "pointer",
-        transition: "background 0.15s",
-        letterSpacing: "0em",
-        whiteSpace: "nowrap" as any,
+        transition: "background 0.15s", letterSpacing: "0em", whiteSpace: "nowrap" as any,
     }
 
     return (
-        <div className={FORM_CLASS} style={{ width: "100%", fontFamily: "'Inter', sans-serif" }}>
+        <div className={FORM_CLASS} style={{ width: "100%", fontFamily: "'Inter', sans-serif", position: "relative" }}>
             <style>{formCSS}</style>
 
-            {/* Work Email */}
-            <div style={fieldWrap}>
-                <label style={labelStyle}>
-                    Work Email <span style={{ color: "#e74c3c" }}>*</span>
-                </label>
-                <input
-                    type="email"
-                    placeholder="you@company.com"
-                    value={email}
-                    onChange={handleEmailChange}
-                    onBlur={handleEmailBlur}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleEmailBlur() }}
-                    style={{
-                        ...inputStyle,
-                        borderColor: emailError ? "#e74c3c" : INPUT_BORDER,
-                    }}
-                />
-                {emailError && (
-                    <div style={{ color: "#e74c3c", fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>
-                        {emailError}
-                    </div>
-                )}
-            </div>
+            {/* ── Form (hidden once meetings shows) ── */}
+            <div style={{ display: showMeetings ? "none" : "block" }}>
+                {/* Work Email */}
+                <div style={fieldWrap}>
+                    <label style={labelStyle}>Work Email <span style={{ color: "#e74c3c" }}>*</span></label>
+                    <input
+                        type="email" placeholder="you@company.com" value={email}
+                        onChange={handleEmailChange} onBlur={handleEmailBlur}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleEmailBlur() }}
+                        style={{ ...inputStyle, borderColor: emailError ? "#e74c3c" : INPUT_BORDER }}
+                    />
+                    {emailError && <div style={{ color: "#e74c3c", fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>{emailError}</div>}
+                </div>
 
-            {/* Progressive fields */}
-            {showExtraFields && (
-                <>
-                    {/* Phone Number */}
+                {/* Progressive fields */}
+                {showExtraFields && (<>
+                    {/* Phone */}
                     <div style={fieldWrap}>
                         <label style={labelStyle}>Phone Number</label>
-                        <input
-                            type="tel"
-                            placeholder="+1 (555) 000-0000"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            style={inputStyle}
-                        />
+                        <input type="tel" placeholder="+1 (555) 000-0000" value={phone}
+                            onChange={(e) => setPhone(e.target.value)} style={inputStyle} />
                     </div>
 
                     {/* Billing System */}
                     <div style={fieldWrap}>
-                        <label style={labelStyle}>
-                            Billing System <span style={{ color: "#e74c3c" }}>*</span>
-                        </label>
+                        <label style={labelStyle}>Billing System <span style={{ color: "#e74c3c" }}>*</span></label>
                         <div style={{ position: "relative" }}>
-                            <select
-                                value={billingSystem}
-                                onChange={(e) => setBillingSystem(e.target.value)}
-                                style={{
-                                    ...inputStyle,
-                                    cursor: "pointer",
-                                    paddingRight: 40,
-                                    color: billingSystem ? INPUT_COLOR : PLACEHOLDER_COLOR,
-                                }}
-                            >
+                            <select value={billingSystem} onChange={(e) => setBillingSystem(e.target.value)}
+                                style={{ ...inputStyle, cursor: "pointer", paddingRight: 40, color: billingSystem ? INPUT_COLOR : PLACEHOLDER_COLOR }}>
                                 <option value="" disabled>Select…</option>
-                                {BILLING_SYSTEMS.map(({ label, value }) => (
-                                    <option key={value} value={value}>{label}</option>
-                                ))}
+                                {BILLING_SYSTEMS.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
                             </select>
                             <DropdownArrow />
                         </div>
@@ -332,67 +357,72 @@ export default function AjaxHubSpotFormV2(props) {
                     {billingSystem === "Other" && (
                         <div style={fieldWrap}>
                             <label style={labelStyle}>What billing system do you use?</label>
-                            <input
-                                type="text"
-                                placeholder="Enter your billing system…"
-                                value={billingOther}
-                                onChange={(e) => setBillingOther(e.target.value)}
-                                style={inputStyle}
-                            />
+                            <input type="text" placeholder="Enter your billing system…" value={billingOther}
+                                onChange={(e) => setBillingOther(e.target.value)} style={inputStyle} />
                         </div>
                     )}
 
                     {/* Firm Size */}
                     <div style={fieldWrap}>
-                        <label style={labelStyle}>
-                            How big is your firm? <span style={{ color: "#e74c3c" }}>*</span>
-                        </label>
+                        <label style={labelStyle}>How big is your firm? <span style={{ color: "#e74c3c" }}>*</span></label>
                         <div style={{ position: "relative" }}>
-                            <select
-                                value={firmSize}
-                                onChange={(e) => setFirmSize(e.target.value)}
-                                style={{
-                                    ...inputStyle,
-                                    cursor: "pointer",
-                                    paddingRight: 40,
-                                    color: firmSize ? INPUT_COLOR : PLACEHOLDER_COLOR,
-                                }}
-                            >
+                            <select value={firmSize} onChange={(e) => setFirmSize(e.target.value)}
+                                style={{ ...inputStyle, cursor: "pointer", paddingRight: 40, color: firmSize ? INPUT_COLOR : PLACEHOLDER_COLOR }}>
                                 <option value="" disabled>Select…</option>
-                                {FIRM_SIZES.map(({ label, value }) => (
-                                    <option key={value} value={value}>{label}</option>
-                                ))}
+                                {FIRM_SIZES.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
                             </select>
                             <DropdownArrow />
                         </div>
                     </div>
-                </>
-            )}
+                </>)}
 
-            {/* Submit error */}
-            {submitError && (
-                <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, lineHeight: 1.4 }}>
-                    {submitError}
+                {submitError && <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, lineHeight: 1.4 }}>{submitError}</div>}
+
+                <div style={{ display: "flex", justifyContent: fullWidthButton ? "stretch" : "flex-start" }}>
+                    <button onClick={handleSubmit} disabled={status === "loading"} style={buttonBase}
+                        onMouseEnter={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_HOVER_COLOR }}
+                        onMouseLeave={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_COLOR }}>
+                        {status === "loading" ? "Submitting…" : buttonLabel}
+                    </button>
                 </div>
-            )}
+            </div>
 
-            {/* Button */}
-            <div style={{ display: "flex", justifyContent: fullWidthButton ? "stretch" : "flex-start" }}>
-                <button
-                    onClick={handleSubmit}
-                    disabled={status === "loading"}
-                    style={buttonBase}
-                    onMouseEnter={(e) => {
-                        if (status !== "loading")
-                            (e.currentTarget as HTMLButtonElement).style.background = BUTTON_HOVER_COLOR
-                    }}
-                    onMouseLeave={(e) => {
-                        if (status !== "loading")
-                            (e.currentTarget as HTMLButtonElement).style.background = BUTTON_COLOR
-                    }}
-                >
-                    {status === "loading" ? "Submitting…" : buttonLabel}
-                </button>
+            {/* ── Meetings embed — always in DOM so it preloads, revealed on success ── */}
+            <div style={{
+                // Hidden: positioned out of flow so it doesn't affect page layout
+                // but still renders + loads the iframe in the background
+                position: showMeetings ? "relative" : "absolute",
+                top: 0, left: 0,
+                width: "100%",
+                height: meetingsHeight,
+                opacity: showMeetings ? 1 : 0,
+                pointerEvents: showMeetings ? "auto" : "none",
+                zIndex: showMeetings ? 0 : -1,
+                overflow: "hidden",
+                transition: "opacity 0.4s ease",
+            }}>
+                {/* Skeleton — only shown if meetings not yet ready when revealed */}
+                {showMeetings && !meetingsReady && (
+                    <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
+                        <MeetingsSkeleton height={meetingsHeight} />
+                    </div>
+                )}
+
+                {/* HubSpot embed */}
+                <div style={{
+                    width: "100%",
+                    height: "calc(100% + 40px)",
+                    marginTop: -40,
+                    opacity: meetingsReady ? 1 : 0,
+                    transition: "opacity 0.4s ease",
+                }}>
+                    <div
+                        ref={meetingsRef}
+                        className="meetings-iframe-container"
+                        data-src={meetingUrl}
+                        style={{ width: "100%", height: "100%" }}
+                    />
+                </div>
             </div>
         </div>
     )
@@ -410,5 +440,18 @@ addPropertyControls(AjaxHubSpotFormV2, {
         type: ControlType.Boolean,
         title: "Full Width Button",
         defaultValue: true,
+    },
+    meetingUrl: {
+        type: ControlType.String,
+        title: "Meeting URL",
+        defaultValue: "https://meetings.hubspot.com/jack-ajax/ajax-demo-call-round-robin-website?embed=true",
+    },
+    meetingsHeight: {
+        type: ControlType.Number,
+        title: "Calendar Height",
+        defaultValue: 700,
+        min: 400,
+        max: 1200,
+        step: 10,
     },
 })
