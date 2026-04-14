@@ -238,23 +238,20 @@ export default function AjaxHubSpotFormV2(props) {
         ].filter(f => f.value !== "")
 
         try {
-            // v2 endpoint = same as HubSpot embed script → triggers notifications + workflows
-            // Must use no-cors because HubSpot v2 blocks cross-origin reads; request still goes through
-            const formData = new URLSearchParams()
-            hsFields.forEach(f => { if (f.value) formData.append(f.name, f.value) })
-            formData.append("hs_context", JSON.stringify({
-                hutk: hutk || undefined,
-                pageUri: window.location.href,
-                pageName: document.title,
-            }))
+            const payload = {
+                fields: hsFields,
+                context: {
+                    pageUri: window.location.href,
+                    pageName: document.title,
+                    ...(hutk ? { hutk } : {}),
+                },
+            }
 
-            await fetch(
-                `https://forms.hubspot.com/uploads/form/v2/${PORTAL_ID}/${FORM_ID}`,
-                { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: formData.toString() }
+            const res = await fetch(
+                `https://api.hsforms.com/submissions/v3/integration/submit/${PORTAL_ID}/${FORM_ID}`,
+                { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
             )
-
-            // no-cors response is always opaque — can't check status, assume success
-            if (true) {
+            if (res.ok) {
                 try { sessionStorage.removeItem(SESSION_KEY) } catch {}
                 try { localStorage.setItem("ajax_last_email", email); sessionStorage.setItem("ajax_last_email", email) } catch {}
 
@@ -274,6 +271,10 @@ export default function AjaxHubSpotFormV2(props) {
                 } else {
                     window.location.href = "/billing-system-waitlist"
                 }
+            } else {
+                const data = await res.json().catch(() => ({}))
+                setSubmitError(data?.errors?.[0]?.message || "Submission failed. Please try again.")
+                setStatus("error")
             }
         } catch (e) {
             setSubmitError("Network error. Please try again.")
