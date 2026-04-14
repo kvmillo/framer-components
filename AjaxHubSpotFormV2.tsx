@@ -134,9 +134,10 @@ export default function AjaxHubSpotFormV2(_props) {
                 callSection.style.removeProperty("display")
                 callSection.style.removeProperty("visibility")
                 callSection.style.removeProperty("opacity")
+                callSection.style.removeProperty("height")
+                callSection.style.removeProperty("overflow")
                 callSection.style.setProperty("display", "block", "important")
                 callSection.style.setProperty("visibility", "visible", "important")
-                callSection.style.setProperty("opacity", "1", "important")
                 callSection.scrollIntoView({ behavior: "smooth" })
             }
 
