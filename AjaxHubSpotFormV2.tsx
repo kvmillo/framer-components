@@ -31,8 +31,6 @@ const FORM_CLASS = "ajax-hs-form-v2"
 const formCSS = `
 .${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:'Inter',sans-serif;font-size:${FONT_SIZE}px}
 .${FORM_CLASS} input:focus,.${FORM_CLASS} select:focus{outline:none;border-color:${INPUT_FOCUS_BORDER}!important;box-shadow:none!important}
-#call{position:fixed!important;top:-9999px!important;left:0!important;width:100vw!important;height:100vh!important;z-index:-999!important;pointer-events:none!important;opacity:0!important}
-body.ajax-call-visible #call{position:relative!important;top:auto!important;left:auto!important;width:auto!important;height:auto!important;z-index:auto!important;pointer-events:auto!important;opacity:1!important}
 body.ajax-call-visible #form{display:none!important}
 `
 
