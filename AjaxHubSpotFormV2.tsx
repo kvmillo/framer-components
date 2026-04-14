@@ -31,8 +31,8 @@ const FORM_CLASS = "ajax-hs-form-v2"
 const formCSS = `
 .${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:'Inter',sans-serif;font-size:${FONT_SIZE}px}
 .${FORM_CLASS} input:focus,.${FORM_CLASS} select:focus{outline:none;border-color:${INPUT_FOCUS_BORDER}!important;box-shadow:none!important}
-#call{display:none!important}
-body.ajax-call-visible #call{display:block!important}
+#call{position:fixed!important;top:-9999px!important;left:0!important;width:100vw!important;height:100vh!important;z-index:-999!important;pointer-events:none!important;opacity:0!important}
+body.ajax-call-visible #call{position:relative!important;top:auto!important;left:auto!important;width:auto!important;height:auto!important;z-index:auto!important;pointer-events:auto!important;opacity:1!important}
 body.ajax-call-visible #form{display:none!important}
 `
 
@@ -119,37 +119,9 @@ export default function AjaxHubSpotFormV2(_props) {
         try {
             localStorage.setItem("ajax_last_email", emailVal)
             sessionStorage.setItem("ajax_last_email", emailVal)
-
             document.body.classList.add("ajax-call-visible")
-
             setTimeout(() => {
-                const callEl = document.getElementById("call")
-                if (!callEl) return
-
-                // Try to inject email into the already-loaded HubSpot iframe
-                // by accessing the srcdoc iframe's inner document
-                try {
-                    const outerIframe = callEl.querySelector("iframe") as HTMLIFrameElement | null
-                    const innerDoc = outerIframe?.contentDocument
-                    if (innerDoc) {
-                        // Find the HubSpot-created iframe inside the srcdoc
-                        const hsIframe = innerDoc.querySelector("iframe") as HTMLIFrameElement | null
-                        if (hsIframe?.src) {
-                            const u = new URL(hsIframe.src)
-                            u.searchParams.set("email", emailVal)
-                            hsIframe.src = u.toString()
-                        } else {
-                            // HubSpot iframe not created yet — reload srcdoc so it initializes fresh
-                            if (outerIframe && outerIframe.srcdoc) {
-                                const saved = outerIframe.srcdoc
-                                outerIframe.srcdoc = ""
-                                requestAnimationFrame(() => { outerIframe.srcdoc = saved })
-                            }
-                        }
-                    }
-                } catch {}
-
-                callEl.scrollIntoView({ behavior: "smooth" })
+                document.getElementById("call")?.scrollIntoView({ behavior: "smooth" })
             }, 50)
         } catch {}
     }
