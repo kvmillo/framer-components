@@ -6,7 +6,6 @@
 // ✅ On success (waitlist): redirects as before
 
 import { useState, useEffect } from "react"
-import { addPropertyControls, ControlType } from "framer"
 
 const PORTAL_ID = "23114530"
 const FORM_ID = "dffb5768-76ae-4357-8350-a3961efd5dc4"
@@ -27,22 +26,9 @@ const BUTTON_RADIUS = 48
 const FIELD_GAP = 24
 const LABEL_INPUT_GAP = 12
 
-// ── Scoped CSS ───────────────────────────────────────────────
+// ── Scoped CSS — injected into <head> to avoid canvas render artifact ──
 const FORM_CLASS = "ajax-hs-form-v2"
-const formCSS = `
-.${FORM_CLASS} input::placeholder {
-    color: ${PLACEHOLDER_COLOR};
-    font-family: 'Inter', sans-serif;
-    font-size: ${FONT_SIZE}px;
-    line-height: 1.5em;
-}
-.${FORM_CLASS} input:focus,
-.${FORM_CLASS} select:focus {
-    outline: none;
-    border-color: ${INPUT_FOCUS_BORDER} !important;
-    box-shadow: none !important;
-}
-`
+const formCSS = `.${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:'Inter',sans-serif;font-size:${FONT_SIZE}px}.${FORM_CLASS} input:focus,.${FORM_CLASS} select:focus{outline:none;border-color:${INPUT_FOCUS_BORDER}!important;box-shadow:none!important}`
 
 // ── Free email domains to block ──────────────────────────────
 const FREE_EMAIL_DOMAINS = [
@@ -98,10 +84,7 @@ function captureAndPersistParams(): Record<string, string> {
     return stored
 }
 // ── Component ─────────────────────────────────────────────────
-export default function AjaxHubSpotFormV2(props) {
-    const { buttonLabel, fullWidthButton } = props
-
-    // Form state
+export default function AjaxHubSpotFormV2(_props) {
     const [email, setEmail] = useState("")
     const [emailError, setEmailError] = useState("")
     const [showExtraFields, setShowExtraFields] = useState(false)
@@ -114,6 +97,14 @@ export default function AjaxHubSpotFormV2(props) {
 
     useEffect(() => {
         captureAndPersistParams()
+        // Inject scoped CSS into <head> to avoid style tag rendering as visible text in Framer canvas
+        const id = "ajax-hs-form-v2-styles"
+        if (!document.getElementById(id)) {
+            const el = document.createElement("style")
+            el.id = id
+            el.textContent = formCSS
+            document.head.appendChild(el)
+        }
     }, [])
 
     const showCallSection = (email: string) => {
@@ -211,11 +202,6 @@ export default function AjaxHubSpotFormV2(props) {
         }
     }
 
-    const handleCloseModal = () => {
-        setShowModal(false)
-        setModalReady(false)
-    }
-
     // ── Styles ────────────────────────────────────────────────
     const inputStyle: React.CSSProperties = {
         width: "100%", padding: "12px 16px", fontSize: FONT_SIZE, lineHeight: "1.5em",
@@ -232,7 +218,7 @@ export default function AjaxHubSpotFormV2(props) {
         <div style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: PLACEHOLDER_COLOR, fontSize: 11 }}>▼</div>
     )
     const buttonBase: React.CSSProperties = {
-        width: fullWidthButton ? "100%" : "auto", padding: "12px 24px",
+        width: "100%", padding: "12px 24px",
         background: status === "loading" ? "#888" : BUTTON_COLOR,
         color: "#ffffff", fontSize: FONT_SIZE, fontWeight: 500, lineHeight: "1.5em",
         fontFamily: "'Inter', sans-serif", border: "none", borderRadius: BUTTON_RADIUS,
@@ -241,11 +227,7 @@ export default function AjaxHubSpotFormV2(props) {
     }
 
     return (
-        <div className={FORM_CLASS} style={{ width: "100%", fontFamily: "'Inter', sans-serif", position: "relative" }}>
-            <style>{formCSS}</style>
-
-            )}
-
+        <div className={FORM_CLASS} style={{ width: "100%", fontFamily: "'Inter', sans-serif" }}>
             {/* ── Form ── */}
             {/* Work Email */}
             <div style={fieldWrap}>
@@ -306,29 +288,13 @@ export default function AjaxHubSpotFormV2(props) {
 
             {submitError && <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, lineHeight: 1.4 }}>{submitError}</div>}
 
-            <div style={{ display: "flex", justifyContent: fullWidthButton ? "stretch" : "flex-start" }}>
-                <button onClick={handleSubmit} disabled={status === "loading"} style={buttonBase}
-                    onMouseEnter={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_HOVER_COLOR }}
-                    onMouseLeave={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_COLOR }}>
-                    {status === "loading" ? "Submitting…" : buttonLabel}
-                </button>
-            </div>
-
+            <button onClick={handleSubmit} disabled={status === "loading"} style={buttonBase}
+                onMouseEnter={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_HOVER_COLOR }}
+                onMouseLeave={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_COLOR }}>
+                {status === "loading" ? "Submitting…" : "Book a Meeting"}
+            </button>
         </div>
     )
 }
 
 AjaxHubSpotFormV2.displayName = "Ajax HubSpot Form V2"
-
-addPropertyControls(AjaxHubSpotFormV2, {
-    buttonLabel: {
-        type: ControlType.String,
-        title: "Button Label",
-        defaultValue: "Book a Meeting",
-    },
-    fullWidthButton: {
-        type: ControlType.Boolean,
-        title: "Full Width Button",
-        defaultValue: true,
-    },
-})
