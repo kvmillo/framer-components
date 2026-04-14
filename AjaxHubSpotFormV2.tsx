@@ -1,11 +1,11 @@
 // Framer Code Component — Ajax HubSpot Form (Direct API) — Book a Meeting Form
 // Portal ID: 23114530 | Form ID: dffb5768-76ae-4357-8350-a3961efd5dc4
 //
-// ✅ Preloads HubSpot meetings embed in background while user fills form
-// ✅ On success (qualified): shows calendar inline instead of redirecting
+// ✅ Preloads HubSpot meetings embed in background (warms browser cache)
+// ✅ On success (qualified): pops a fixed modal with the calendar, email pre-filled
 // ✅ On success (waitlist): redirects as before
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { addPropertyControls, ControlType } from "framer"
 
 const PORTAL_ID = "23114530"
@@ -106,6 +106,15 @@ function captureAndPersistParams(): Record<string, string> {
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(stored)) } catch {}
     return stored
 }
+function buildMeetingUrl(base: string, email: string): string {
+    try {
+        const u = new URL(base)
+        if (email) u.searchParams.set("email", email)
+        return u.toString()
+    } catch {
+        return base
+    }
+}
 
 // ── Skeleton ─────────────────────────────────────────────────
 function SkBlock({ w = "100%", h = 14, r = 6, dark = false }: { w?: string | number; h?: number; r?: number; dark?: boolean }) {
@@ -179,35 +188,13 @@ export default function AjaxHubSpotFormV2(props) {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
     const [submitError, setSubmitError] = useState("")
 
-    // Meetings state
-    const [showMeetings, setShowMeetings] = useState(false)
-    const [meetingsReady, setMeetingsReady] = useState(false)
-    const meetingsRef = useRef<HTMLDivElement>(null)
+    // Modal + meetings state
+    const [showModal, setShowModal] = useState(false)
+    const [modalSrc, setModalSrc] = useState<string | null>(null)
+    const [modalReady, setModalReady] = useState(false)
 
     useEffect(() => {
         captureAndPersistParams()
-
-        // Load HubSpot meetings embed script immediately in background
-        if (meetingUrl && !document.querySelector('script[src*="MeetingsEmbedCode"]')) {
-            const script = document.createElement("script")
-            script.src = "https://static.hsappstatic.net/MeetingsEmbed/ex/MeetingsEmbedCode.js"
-            script.async = true
-            document.body.appendChild(script)
-        }
-
-        // Watch for the meetings iframe to load
-        const observer = new MutationObserver(() => {
-            const iframe = meetingsRef.current?.querySelector("iframe")
-            if (iframe) {
-                observer.disconnect()
-                iframe.addEventListener("load", () => setTimeout(() => setMeetingsReady(true), 1000))
-                setTimeout(() => setMeetingsReady(true), 15000) // hard fallback
-            }
-        })
-        if (meetingsRef.current) {
-            observer.observe(meetingsRef.current, { childList: true, subtree: true })
-        }
-        return () => observer.disconnect()
     }, [])
 
     // ── Email validation ──────────────────────────────────────
@@ -270,9 +257,11 @@ export default function AjaxHubSpotFormV2(props) {
                 const isSmallFirm = SMALL_FIRM_SIZES.includes(firmSize)
 
                 if (isQualifiedBilling && !isSmallFirm) {
-                    // Show inline calendar instead of redirecting
+                    // Open modal with email pre-filled
                     setStatus("success")
-                    setShowMeetings(true)
+                    setModalSrc(buildMeetingUrl(meetingUrl, email))
+                    setModalReady(false)
+                    setShowModal(true)
                 } else if (isQualifiedBilling && isSmallFirm) {
                     window.location.href = "/express-waitlist"
                 } else {
@@ -287,6 +276,11 @@ export default function AjaxHubSpotFormV2(props) {
             setSubmitError("Network error. Please try again.")
             setStatus("error")
         }
+    }
+
+    const handleCloseModal = () => {
+        setShowModal(false)
+        setModalReady(false)
     }
 
     // ── Styles ────────────────────────────────────────────────
@@ -317,113 +311,147 @@ export default function AjaxHubSpotFormV2(props) {
         <div className={FORM_CLASS} style={{ width: "100%", fontFamily: "'Inter', sans-serif", position: "relative" }}>
             <style>{formCSS}</style>
 
-            {/* ── Form (hidden once meetings shows) ── */}
-            <div style={{ display: showMeetings ? "none" : "block" }}>
-                {/* Work Email */}
-                <div style={fieldWrap}>
-                    <label style={labelStyle}>Work Email <span style={{ color: "#e74c3c" }}>*</span></label>
-                    <input
-                        type="email" placeholder="you@company.com" value={email}
-                        onChange={handleEmailChange} onBlur={handleEmailBlur}
-                        onKeyDown={(e) => { if (e.key === "Enter") handleEmailBlur() }}
-                        style={{ ...inputStyle, borderColor: emailError ? "#e74c3c" : INPUT_BORDER }}
-                    />
-                    {emailError && <div style={{ color: "#e74c3c", fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>{emailError}</div>}
-                </div>
+            {/* ── Hidden preload iframe — warms browser cache for meeting URL ── */}
+            {meetingUrl && (
+                <iframe
+                    src={meetingUrl}
+                    style={{
+                        position: "fixed", top: "-9999px", left: 0,
+                        width: "900px", height: `${meetingsHeight}px`,
+                        border: "none", opacity: 0, pointerEvents: "none", zIndex: -999,
+                    }}
+                    aria-hidden="true"
+                    tabIndex={-1}
+                />
+            )}
 
-                {/* Progressive fields */}
-                {showExtraFields && (<>
-                    {/* Phone */}
-                    <div style={fieldWrap}>
-                        <label style={labelStyle}>Phone Number</label>
-                        <input type="tel" placeholder="+1 (555) 000-0000" value={phone}
-                            onChange={(e) => setPhone(e.target.value)} style={inputStyle} />
-                    </div>
-
-                    {/* Billing System */}
-                    <div style={fieldWrap}>
-                        <label style={labelStyle}>Billing System <span style={{ color: "#e74c3c" }}>*</span></label>
-                        <div style={{ position: "relative" }}>
-                            <select value={billingSystem} onChange={(e) => setBillingSystem(e.target.value)}
-                                style={{ ...inputStyle, cursor: "pointer", paddingRight: 40, color: billingSystem ? INPUT_COLOR : PLACEHOLDER_COLOR }}>
-                                <option value="" disabled>Select…</option>
-                                {BILLING_SYSTEMS.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
-                            </select>
-                            <DropdownArrow />
-                        </div>
-                    </div>
-
-                    {/* Billing Other */}
-                    {billingSystem === "Other" && (
-                        <div style={fieldWrap}>
-                            <label style={labelStyle}>What billing system do you use?</label>
-                            <input type="text" placeholder="Enter your billing system…" value={billingOther}
-                                onChange={(e) => setBillingOther(e.target.value)} style={inputStyle} />
-                        </div>
-                    )}
-
-                    {/* Firm Size */}
-                    <div style={fieldWrap}>
-                        <label style={labelStyle}>How big is your firm? <span style={{ color: "#e74c3c" }}>*</span></label>
-                        <div style={{ position: "relative" }}>
-                            <select value={firmSize} onChange={(e) => setFirmSize(e.target.value)}
-                                style={{ ...inputStyle, cursor: "pointer", paddingRight: 40, color: firmSize ? INPUT_COLOR : PLACEHOLDER_COLOR }}>
-                                <option value="" disabled>Select…</option>
-                                {FIRM_SIZES.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
-                            </select>
-                            <DropdownArrow />
-                        </div>
-                    </div>
-                </>)}
-
-                {submitError && <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, lineHeight: 1.4 }}>{submitError}</div>}
-
-                <div style={{ display: "flex", justifyContent: fullWidthButton ? "stretch" : "flex-start" }}>
-                    <button onClick={handleSubmit} disabled={status === "loading"} style={buttonBase}
-                        onMouseEnter={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_HOVER_COLOR }}
-                        onMouseLeave={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_COLOR }}>
-                        {status === "loading" ? "Submitting…" : buttonLabel}
-                    </button>
-                </div>
+            {/* ── Form ── */}
+            {/* Work Email */}
+            <div style={fieldWrap}>
+                <label style={labelStyle}>Work Email <span style={{ color: "#e74c3c" }}>*</span></label>
+                <input
+                    type="email" placeholder="you@company.com" value={email}
+                    onChange={handleEmailChange} onBlur={handleEmailBlur}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleEmailBlur() }}
+                    style={{ ...inputStyle, borderColor: emailError ? "#e74c3c" : INPUT_BORDER }}
+                />
+                {emailError && <div style={{ color: "#e74c3c", fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>{emailError}</div>}
             </div>
 
-            {/* ── Meetings embed — always in DOM so it preloads, revealed on success ── */}
-            <div style={{
-                // Hidden: positioned out of flow so it doesn't affect page layout
-                // but still renders + loads the iframe in the background
-                position: showMeetings ? "relative" : "absolute",
-                top: 0, left: 0,
-                width: "100%",
-                height: meetingsHeight,
-                opacity: showMeetings ? 1 : 0,
-                pointerEvents: showMeetings ? "auto" : "none",
-                zIndex: showMeetings ? 0 : -1,
-                overflow: "hidden",
-                transition: "opacity 0.4s ease",
-            }}>
-                {/* Skeleton — only shown if meetings not yet ready when revealed */}
-                {showMeetings && !meetingsReady && (
-                    <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
-                        <MeetingsSkeleton height={meetingsHeight} />
+            {/* Progressive fields */}
+            {showExtraFields && (<>
+                {/* Phone */}
+                <div style={fieldWrap}>
+                    <label style={labelStyle}>Phone Number</label>
+                    <input type="tel" placeholder="+1 (555) 000-0000" value={phone}
+                        onChange={(e) => setPhone(e.target.value)} style={inputStyle} />
+                </div>
+
+                {/* Billing System */}
+                <div style={fieldWrap}>
+                    <label style={labelStyle}>Billing System <span style={{ color: "#e74c3c" }}>*</span></label>
+                    <div style={{ position: "relative" }}>
+                        <select value={billingSystem} onChange={(e) => setBillingSystem(e.target.value)}
+                            style={{ ...inputStyle, cursor: "pointer", paddingRight: 40, color: billingSystem ? INPUT_COLOR : PLACEHOLDER_COLOR }}>
+                            <option value="" disabled>Select…</option>
+                            {BILLING_SYSTEMS.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                        <DropdownArrow />
+                    </div>
+                </div>
+
+                {/* Billing Other */}
+                {billingSystem === "Other" && (
+                    <div style={fieldWrap}>
+                        <label style={labelStyle}>What billing system do you use?</label>
+                        <input type="text" placeholder="Enter your billing system…" value={billingOther}
+                            onChange={(e) => setBillingOther(e.target.value)} style={inputStyle} />
                     </div>
                 )}
 
-                {/* HubSpot embed */}
-                <div style={{
-                    width: "100%",
-                    height: "calc(100% + 40px)",
-                    marginTop: -40,
-                    opacity: meetingsReady ? 1 : 0,
-                    transition: "opacity 0.4s ease",
-                }}>
-                    <div
-                        ref={meetingsRef}
-                        className="meetings-iframe-container"
-                        data-src={meetingUrl}
-                        style={{ width: "100%", height: "100%" }}
-                    />
+                {/* Firm Size */}
+                <div style={fieldWrap}>
+                    <label style={labelStyle}>How big is your firm? <span style={{ color: "#e74c3c" }}>*</span></label>
+                    <div style={{ position: "relative" }}>
+                        <select value={firmSize} onChange={(e) => setFirmSize(e.target.value)}
+                            style={{ ...inputStyle, cursor: "pointer", paddingRight: 40, color: firmSize ? INPUT_COLOR : PLACEHOLDER_COLOR }}>
+                            <option value="" disabled>Select…</option>
+                            {FIRM_SIZES.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                        <DropdownArrow />
+                    </div>
                 </div>
+            </>)}
+
+            {submitError && <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, lineHeight: 1.4 }}>{submitError}</div>}
+
+            <div style={{ display: "flex", justifyContent: fullWidthButton ? "stretch" : "flex-start" }}>
+                <button onClick={handleSubmit} disabled={status === "loading"} style={buttonBase}
+                    onMouseEnter={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_HOVER_COLOR }}
+                    onMouseLeave={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_COLOR }}>
+                    {status === "loading" ? "Submitting…" : buttonLabel}
+                </button>
             </div>
+
+            {/* ── Modal overlay ── */}
+            {showModal && (
+                <div
+                    onClick={(e) => { if (e.target === e.currentTarget) handleCloseModal() }}
+                    style={{
+                        position: "fixed", inset: 0, zIndex: 99999,
+                        background: "rgba(0, 0, 0, 0.65)",
+                        backdropFilter: "blur(6px)",
+                        WebkitBackdropFilter: "blur(6px)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: "24px",
+                        boxSizing: "border-box",
+                    }}
+                >
+                    <div style={{
+                        position: "relative",
+                        width: "100%", maxWidth: 900,
+                        height: Math.min(meetingsHeight, typeof window !== "undefined" ? window.innerHeight - 48 : meetingsHeight),
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        boxShadow: "0 24px 80px rgba(0,0,0,0.4)",
+                        background: "#fff",
+                    }}>
+                        {/* Close button */}
+                        <button
+                            onClick={handleCloseModal}
+                            style={{
+                                position: "absolute", top: 12, right: 12, zIndex: 10,
+                                width: 32, height: 32, borderRadius: "50%",
+                                background: "rgba(0,0,0,0.12)", border: "none",
+                                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 14, color: "#333", lineHeight: 1,
+                            }}
+                        >✕</button>
+
+                        {/* Skeleton shown while iframe loads */}
+                        {!modalReady && (
+                            <div style={{ position: "absolute", inset: 0 }}>
+                                <MeetingsSkeleton height={meetingsHeight} />
+                            </div>
+                        )}
+
+                        {/* HubSpot meetings iframe — email pre-filled in src */}
+                        <div style={{
+                            width: "100%",
+                            height: "calc(100% + 40px)",
+                            marginTop: -40,
+                            opacity: modalReady ? 1 : 0,
+                            transition: "opacity 0.4s ease",
+                        }}>
+                            <iframe
+                                src={modalSrc || ""}
+                                onLoad={() => setTimeout(() => setModalReady(true), 800)}
+                                style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
