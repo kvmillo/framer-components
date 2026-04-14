@@ -31,9 +31,9 @@ const FORM_CLASS = "ajax-hs-form-v2"
 const formCSS = `
 .${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:'Inter',sans-serif;font-size:${FONT_SIZE}px}
 .${FORM_CLASS} input:focus,.${FORM_CLASS} select:focus{outline:none;border-color:${INPUT_FOCUS_BORDER}!important;box-shadow:none!important}
-#call{display:none!important;visibility:hidden!important;opacity:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important}
-body.ajax-call-visible #call{display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;overflow:visible!important;pointer-events:auto!important}
-body.ajax-call-visible #form{display:none!important;visibility:hidden!important;opacity:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important}
+#call{position:fixed!important;top:-200vh!important;left:0!important;width:100%!important;z-index:-999!important;pointer-events:none!important}
+body.ajax-call-visible #call{position:relative!important;top:auto!important;left:auto!important;width:auto!important;z-index:auto!important;pointer-events:auto!important}
+body.ajax-call-visible #form{display:none!important}
 `
 
 // ── Free email domains to block ──────────────────────────────
