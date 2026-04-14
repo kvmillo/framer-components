@@ -31,8 +31,8 @@ const FORM_CLASS = "ajax-hs-form-v2"
 const formCSS = `
 .${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:'Inter',sans-serif;font-size:${FONT_SIZE}px}
 .${FORM_CLASS} input:focus,.${FORM_CLASS} select:focus{outline:none;border-color:${INPUT_FOCUS_BORDER}!important;box-shadow:none!important}
-#call{position:fixed!important;top:-200vh!important;left:0!important;width:100%!important;z-index:-999!important;pointer-events:none!important}
-body.ajax-call-visible #call{position:relative!important;top:auto!important;left:auto!important;width:auto!important;z-index:auto!important;pointer-events:auto!important}
+#call{display:none!important}
+body.ajax-call-visible #call{display:block!important}
 body.ajax-call-visible #form{display:none!important}
 `
 
@@ -117,11 +117,24 @@ export default function AjaxHubSpotFormV2(_props) {
 
     const showCallSection = (emailVal: string) => {
         try {
-            document.body.classList.add("ajax-call-visible")
-            const callSection = document.getElementById("call")
-            if (callSection) callSection.scrollIntoView({ behavior: "smooth" })
             localStorage.setItem("ajax_last_email", emailVal)
             sessionStorage.setItem("ajax_last_email", emailVal)
+
+            document.body.classList.add("ajax-call-visible")
+
+            // Reload the srcdoc iframe inside #call so the meetings embed
+            // reinitializes with correct dimensions (was 0 while hidden)
+            setTimeout(() => {
+                const callEl = document.getElementById("call")
+                if (!callEl) return
+                const iframe = callEl.querySelector("iframe") as HTMLIFrameElement | null
+                if (iframe && iframe.srcdoc) {
+                    const saved = iframe.srcdoc
+                    iframe.srcdoc = ""
+                    requestAnimationFrame(() => { iframe.srcdoc = saved })
+                }
+                callEl.scrollIntoView({ behavior: "smooth" })
+            }, 50)
         } catch {}
     }
 
