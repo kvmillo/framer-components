@@ -28,7 +28,13 @@ const LABEL_INPUT_GAP = 12
 
 // ── Scoped CSS — injected into <head> to avoid canvas render artifact ──
 const FORM_CLASS = "ajax-hs-form-v2"
-const formCSS = `.${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:'Inter',sans-serif;font-size:${FONT_SIZE}px}.${FORM_CLASS} input:focus,.${FORM_CLASS} select:focus{outline:none;border-color:${INPUT_FOCUS_BORDER}!important;box-shadow:none!important}`
+const formCSS = `
+.${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:'Inter',sans-serif;font-size:${FONT_SIZE}px}
+.${FORM_CLASS} input:focus,.${FORM_CLASS} select:focus{outline:none;border-color:${INPUT_FOCUS_BORDER}!important;box-shadow:none!important}
+#call{display:none!important;visibility:hidden!important;opacity:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important}
+body.ajax-call-visible #call{display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;overflow:visible!important;pointer-events:auto!important}
+body.ajax-call-visible #form{display:none!important;visibility:hidden!important;opacity:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important}
+`
 
 // ── Free email domains to block ──────────────────────────────
 const FREE_EMAIL_DOMAINS = [
@@ -107,40 +113,13 @@ export default function AjaxHubSpotFormV2(_props) {
             document.head.appendChild(el)
         }
 
-        // Hide #call section on load — shown only after qualified submission
-        const callSection = document.getElementById("call")
-        if (callSection) {
-            callSection.style.setProperty("display", "none", "important")
-            callSection.style.setProperty("visibility", "hidden", "important")
-            callSection.style.setProperty("height", "0", "important")
-            callSection.style.setProperty("overflow", "hidden", "important")
-        }
     }, [])
 
     const showCallSection = (emailVal: string) => {
         try {
-            const formSection = document.getElementById("form")
+            document.body.classList.add("ajax-call-visible")
             const callSection = document.getElementById("call")
-
-            if (formSection) {
-                formSection.style.setProperty("display", "none", "important")
-                formSection.style.setProperty("visibility", "hidden", "important")
-                formSection.style.setProperty("opacity", "0", "important")
-                formSection.style.setProperty("pointer-events", "none", "important")
-                formSection.style.setProperty("height", "0", "important")
-                formSection.style.setProperty("overflow", "hidden", "important")
-            }
-            if (callSection) {
-                callSection.style.removeProperty("display")
-                callSection.style.removeProperty("visibility")
-                callSection.style.removeProperty("opacity")
-                callSection.style.removeProperty("height")
-                callSection.style.removeProperty("overflow")
-                callSection.style.setProperty("display", "block", "important")
-                callSection.style.setProperty("visibility", "visible", "important")
-                callSection.scrollIntoView({ behavior: "smooth" })
-            }
-
+            if (callSection) callSection.scrollIntoView({ behavior: "smooth" })
             localStorage.setItem("ajax_last_email", emailVal)
             sessionStorage.setItem("ajax_last_email", emailVal)
         } catch {}
