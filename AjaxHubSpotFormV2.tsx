@@ -27,11 +27,6 @@ const BUTTON_RADIUS = 48
 const FIELD_GAP = 24
 const LABEL_INPUT_GAP = 12
 
-// ── Skeleton colors ───────────────────────────────────────────
-const SK_PURPLE = "#3804E6"
-const SK_SHIMMER_DARK = `linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.08) 75%)`
-const SK_SHIMMER_LIGHT = `linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.03) 50%, rgba(0,0,0,0.06) 75%)`
-
 // ── Scoped CSS ───────────────────────────────────────────────
 const FORM_CLASS = "ajax-hs-form-v2"
 const formCSS = `
@@ -46,10 +41,6 @@ const formCSS = `
     outline: none;
     border-color: ${INPUT_FOCUS_BORDER} !important;
     box-shadow: none !important;
-}
-@keyframes skeletonShimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
 }
 `
 
@@ -106,76 +97,9 @@ function captureAndPersistParams(): Record<string, string> {
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(stored)) } catch {}
     return stored
 }
-function buildMeetingUrl(base: string, email: string): string {
-    try {
-        const u = new URL(base)
-        if (email) u.searchParams.set("email", email)
-        return u.toString()
-    } catch {
-        return base
-    }
-}
-
-// ── Skeleton ─────────────────────────────────────────────────
-function SkBlock({ w = "100%", h = 14, r = 6, dark = false }: { w?: string | number; h?: number; r?: number; dark?: boolean }) {
-    return <div style={{
-        width: w, height: h, borderRadius: r, flexShrink: 0,
-        background: dark ? SK_SHIMMER_DARK : SK_SHIMMER_LIGHT,
-        backgroundSize: "200% 100%",
-        animation: "skeletonShimmer 1.6s ease infinite",
-    }} />
-}
-
-function MeetingsSkeleton({ height }: { height: number }) {
-    return (
-        <div style={{ display: "flex", width: "100%", height, overflow: "hidden", borderRadius: 8 }}>
-            {/* Left purple panel */}
-            <div style={{ width: "52%", background: SK_PURPLE, padding: "32px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20, boxSizing: "border-box" }}>
-                <div style={{ width: 72, height: 72, borderRadius: "50%", background: SK_SHIMMER_DARK, backgroundSize: "200% 100%", animation: "skeletonShimmer 1.6s ease infinite" }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", alignItems: "center" }}>
-                    <SkBlock w="80%" h={14} dark />
-                    <SkBlock w="60%" h={14} dark />
-                </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                    <SkBlock w={20} h={20} r={4} dark />
-                    <SkBlock w="45%" h={18} dark />
-                    <SkBlock w={20} h={20} r={4} dark />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, width: "100%" }}>
-                    {Array.from({ length: 7 }).map((_, i) => <div key={i} style={{ height: 12, borderRadius: 4, background: "rgba(255,255,255,0.25)" }} />)}
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, width: "100%" }}>
-                    {Array.from({ length: 35 }).map((_, i) => {
-                        const col = i % 7
-                        const empty = col === 0 || col === 6 || i < 3 || i > 30
-                        return <div key={i} style={{ height: 30, borderRadius: 50, background: empty ? "transparent" : SK_SHIMMER_DARK, backgroundSize: "200% 100%", animation: empty ? "none" : "skeletonShimmer 1.6s ease infinite" }} />
-                    })}
-                </div>
-            </div>
-            {/* Right white panel */}
-            <div style={{ flex: 1, background: "#fff", padding: "32px 20px", display: "flex", flexDirection: "column", gap: 24, boxSizing: "border-box" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <SkBlock w="55%" h={14} />
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}><SkBlock w={14} h={14} r={3} /><SkBlock w="30%" h={12} /></div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <SkBlock w="55%" h={14} />
-                    <SkBlock w="100%" h={40} r={8} />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <SkBlock w="65%" h={14} />
-                    <SkBlock w="50%" h={12} />
-                    <div style={{ height: 8 }} />
-                    {Array.from({ length: 5 }).map((_, i) => <SkBlock key={i} w="100%" h={44} r={8} />)}
-                </div>
-            </div>
-        </div>
-    )
-}
-
 // ── Component ─────────────────────────────────────────────────
 export default function AjaxHubSpotFormV2(props) {
-    const { buttonLabel, fullWidthButton, meetingUrl, meetingsHeight } = props
+    const { buttonLabel, fullWidthButton } = props
 
     // Form state
     const [email, setEmail] = useState("")
@@ -188,14 +112,25 @@ export default function AjaxHubSpotFormV2(props) {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
     const [submitError, setSubmitError] = useState("")
 
-    // Modal + meetings state
-    const [showModal, setShowModal] = useState(false)
-    const [modalSrc, setModalSrc] = useState<string | null>(null)
-    const [modalReady, setModalReady] = useState(false)
-
     useEffect(() => {
         captureAndPersistParams()
     }, [])
+
+    const showCallSection = (email: string) => {
+        try {
+            const formSection = document.getElementById("form")
+            const callSection = document.getElementById("call")
+            if (formSection) formSection.style.display = "none"
+            if (callSection) {
+                callSection.style.display = ""
+                // Scroll to it smoothly
+                callSection.scrollIntoView({ behavior: "smooth" })
+            }
+            // Persist email for the meetings embed in #call to pick up
+            localStorage.setItem("ajax_last_email", email)
+            sessionStorage.setItem("ajax_last_email", email)
+        } catch {}
+    }
 
     // ── Email validation ──────────────────────────────────────
     const handleEmailBlur = () => {
@@ -264,9 +199,7 @@ export default function AjaxHubSpotFormV2(props) {
 
             if (isQualifiedBilling && !isSmallFirm) {
                 setStatus("success")
-                setModalSrc(buildMeetingUrl(meetingUrl, email))
-                setModalReady(false)
-                setShowModal(true)
+                showCallSection(email)
             } else if (isQualifiedBilling && isSmallFirm) {
                 window.location.href = "/express-waitlist"
             } else {
@@ -311,18 +244,6 @@ export default function AjaxHubSpotFormV2(props) {
         <div className={FORM_CLASS} style={{ width: "100%", fontFamily: "'Inter', sans-serif", position: "relative" }}>
             <style>{formCSS}</style>
 
-            {/* ── Hidden preload iframe — warms browser cache for meeting URL ── */}
-            {meetingUrl && (
-                <iframe
-                    src={meetingUrl}
-                    style={{
-                        position: "fixed", top: "-9999px", left: 0,
-                        width: "900px", height: `${meetingsHeight}px`,
-                        border: "none", opacity: 0, pointerEvents: "none", zIndex: -999,
-                    }}
-                    aria-hidden="true"
-                    tabIndex={-1}
-                />
             )}
 
             {/* ── Form ── */}
@@ -393,48 +314,6 @@ export default function AjaxHubSpotFormV2(props) {
                 </button>
             </div>
 
-            {/* ── Modal overlay ── */}
-            {showModal && (
-                <div style={{
-                    position: "fixed", inset: 0, zIndex: 20,
-                    background: "#fff",
-                    overflow: "hidden",
-                }}>
-                    {/* Close button */}
-                    <button
-                        onClick={handleCloseModal}
-                        style={{
-                            position: "absolute", top: 16, right: 16, zIndex: 21,
-                            width: 36, height: 36, borderRadius: "50%",
-                            background: "rgba(0,0,0,0.12)", border: "none",
-                            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 16, color: "#333", lineHeight: 1,
-                        }}
-                    >✕</button>
-
-                    {/* Skeleton shown while iframe loads */}
-                    {!modalReady && (
-                        <div style={{ position: "absolute", inset: 0 }}>
-                            <MeetingsSkeleton height={typeof window !== "undefined" ? window.innerHeight : meetingsHeight} />
-                        </div>
-                    )}
-
-                    {/* HubSpot meetings iframe — email pre-filled in src */}
-                    <div style={{
-                        width: "100%",
-                        height: "calc(100% + 40px)",
-                        marginTop: -40,
-                        opacity: modalReady ? 1 : 0,
-                        transition: "opacity 0.4s ease",
-                    }}>
-                        <iframe
-                            src={modalSrc || ""}
-                            onLoad={() => setTimeout(() => setModalReady(true), 800)}
-                            style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                        />
-                    </div>
-                </div>
-            )}
         </div>
     )
 }
@@ -451,18 +330,5 @@ addPropertyControls(AjaxHubSpotFormV2, {
         type: ControlType.Boolean,
         title: "Full Width Button",
         defaultValue: true,
-    },
-    meetingUrl: {
-        type: ControlType.String,
-        title: "Meeting URL",
-        defaultValue: "https://meetings.hubspot.com/jack-ajax/ajax-demo-call-round-robin-website?embed=true",
-    },
-    meetingsHeight: {
-        type: ControlType.Number,
-        title: "Calendar Height",
-        defaultValue: 700,
-        min: 400,
-        max: 1200,
-        step: 10,
     },
 })
