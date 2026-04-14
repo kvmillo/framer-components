@@ -237,17 +237,21 @@ export default function AjaxHubSpotFormV2(props) {
             { name: "seo_source", value: tracked.seo_source || "" },
         ].filter(f => f.value !== "")
 
-        const payload: any = {
-            fields: hsFields,
-            context: { pageUri: window.location.href, pageName: document.title, ...(hutk ? { hutk } : {}) },
-        }
-
         try {
+            // Use v2 endpoint — same as HubSpot's own embed script, triggers notifications/workflows correctly
+            const formData = new URLSearchParams()
+            hsFields.forEach(f => { if (f.value) formData.append(f.name, f.value) })
+            formData.append("hs_context", JSON.stringify({
+                hutk: hutk || undefined,
+                pageUri: window.location.href,
+                pageName: document.title,
+            }))
+
             const res = await fetch(
-                `https://api.hsforms.com/submissions/v3/integration/submit/${PORTAL_ID}/${FORM_ID}`,
-                { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
+                `https://forms.hubspot.com/uploads/form/v2/${PORTAL_ID}/${FORM_ID}`,
+                { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: formData.toString() }
             )
-            if (res.ok) {
+            if (res.ok || res.status === 302 || res.status === 204) {
                 try { sessionStorage.removeItem(SESSION_KEY) } catch {}
                 try { localStorage.setItem("ajax_last_email", email); sessionStorage.setItem("ajax_last_email", email) } catch {}
 
@@ -268,8 +272,7 @@ export default function AjaxHubSpotFormV2(props) {
                     window.location.href = "/billing-system-waitlist"
                 }
             } else {
-                const data = await res.json()
-                setSubmitError(data?.errors?.[0]?.message || "Submission failed. Please try again.")
+                setSubmitError("Submission failed. Please try again.")
                 setStatus("error")
             }
         } catch (e) {
