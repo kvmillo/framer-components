@@ -122,17 +122,33 @@ export default function AjaxHubSpotFormV2(_props) {
 
             document.body.classList.add("ajax-call-visible")
 
-            // Reload the srcdoc iframe inside #call so the meetings embed
-            // reinitializes with correct dimensions (was 0 while hidden)
             setTimeout(() => {
                 const callEl = document.getElementById("call")
                 if (!callEl) return
-                const iframe = callEl.querySelector("iframe") as HTMLIFrameElement | null
-                if (iframe && iframe.srcdoc) {
-                    const saved = iframe.srcdoc
-                    iframe.srcdoc = ""
-                    requestAnimationFrame(() => { iframe.srcdoc = saved })
-                }
+
+                // Try to inject email into the already-loaded HubSpot iframe
+                // by accessing the srcdoc iframe's inner document
+                try {
+                    const outerIframe = callEl.querySelector("iframe") as HTMLIFrameElement | null
+                    const innerDoc = outerIframe?.contentDocument
+                    if (innerDoc) {
+                        // Find the HubSpot-created iframe inside the srcdoc
+                        const hsIframe = innerDoc.querySelector("iframe") as HTMLIFrameElement | null
+                        if (hsIframe?.src) {
+                            const u = new URL(hsIframe.src)
+                            u.searchParams.set("email", emailVal)
+                            hsIframe.src = u.toString()
+                        } else {
+                            // HubSpot iframe not created yet — reload srcdoc so it initializes fresh
+                            if (outerIframe && outerIframe.srcdoc) {
+                                const saved = outerIframe.srcdoc
+                                outerIframe.srcdoc = ""
+                                requestAnimationFrame(() => { outerIframe.srcdoc = saved })
+                            }
+                        }
+                    }
+                } catch {}
+
                 callEl.scrollIntoView({ behavior: "smooth" })
             }, 50)
         } catch {}
