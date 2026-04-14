@@ -97,6 +97,7 @@ export default function AjaxHubSpotFormV2(_props) {
 
     useEffect(() => {
         captureAndPersistParams()
+
         // Inject scoped CSS into <head> to avoid style tag rendering as visible text in Framer canvas
         const id = "ajax-hs-form-v2-styles"
         if (!document.getElementById(id)) {
@@ -104,6 +105,15 @@ export default function AjaxHubSpotFormV2(_props) {
             el.id = id
             el.textContent = formCSS
             document.head.appendChild(el)
+        }
+
+        // Hide #call section on load — shown only after qualified submission
+        const callSection = document.getElementById("call")
+        if (callSection) {
+            callSection.style.setProperty("display", "none", "important")
+            callSection.style.setProperty("visibility", "hidden", "important")
+            callSection.style.setProperty("height", "0", "important")
+            callSection.style.setProperty("overflow", "hidden", "important")
         }
     }, [])
 
