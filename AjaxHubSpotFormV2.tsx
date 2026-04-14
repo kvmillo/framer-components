@@ -107,19 +107,31 @@ export default function AjaxHubSpotFormV2(_props) {
         }
     }, [])
 
-    const showCallSection = (email: string) => {
+    const showCallSection = (emailVal: string) => {
         try {
             const formSection = document.getElementById("form")
             const callSection = document.getElementById("call")
-            if (formSection) formSection.style.display = "none"
+
+            if (formSection) {
+                formSection.style.setProperty("display", "none", "important")
+                formSection.style.setProperty("visibility", "hidden", "important")
+                formSection.style.setProperty("opacity", "0", "important")
+                formSection.style.setProperty("pointer-events", "none", "important")
+                formSection.style.setProperty("height", "0", "important")
+                formSection.style.setProperty("overflow", "hidden", "important")
+            }
             if (callSection) {
-                callSection.style.display = ""
-                // Scroll to it smoothly
+                callSection.style.removeProperty("display")
+                callSection.style.removeProperty("visibility")
+                callSection.style.removeProperty("opacity")
+                callSection.style.setProperty("display", "block", "important")
+                callSection.style.setProperty("visibility", "visible", "important")
+                callSection.style.setProperty("opacity", "1", "important")
                 callSection.scrollIntoView({ behavior: "smooth" })
             }
-            // Persist email for the meetings embed in #call to pick up
-            localStorage.setItem("ajax_last_email", email)
-            sessionStorage.setItem("ajax_last_email", email)
+
+            localStorage.setItem("ajax_last_email", emailVal)
+            sessionStorage.setItem("ajax_last_email", emailVal)
         } catch {}
     }
 
