@@ -238,7 +238,8 @@ export default function AjaxHubSpotFormV2(props) {
         ].filter(f => f.value !== "")
 
         try {
-            // Use v2 endpoint — same as HubSpot's own embed script, triggers notifications/workflows correctly
+            // v2 endpoint = same as HubSpot embed script → triggers notifications + workflows
+            // Must use no-cors because HubSpot v2 blocks cross-origin reads; request still goes through
             const formData = new URLSearchParams()
             hsFields.forEach(f => { if (f.value) formData.append(f.name, f.value) })
             formData.append("hs_context", JSON.stringify({
@@ -247,11 +248,13 @@ export default function AjaxHubSpotFormV2(props) {
                 pageName: document.title,
             }))
 
-            const res = await fetch(
+            await fetch(
                 `https://forms.hubspot.com/uploads/form/v2/${PORTAL_ID}/${FORM_ID}`,
-                { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: formData.toString() }
+                { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: formData.toString() }
             )
-            if (res.ok || res.status === 302 || res.status === 204) {
+
+            // no-cors response is always opaque — can't check status, assume success
+            if (true) {
                 try { sessionStorage.removeItem(SESSION_KEY) } catch {}
                 try { localStorage.setItem("ajax_last_email", email); sessionStorage.setItem("ajax_last_email", email) } catch {}
 
@@ -271,9 +274,6 @@ export default function AjaxHubSpotFormV2(props) {
                 } else {
                     window.location.href = "/billing-system-waitlist"
                 }
-            } else {
-                setSubmitError("Submission failed. Please try again.")
-                setStatus("error")
             }
         } catch (e) {
             setSubmitError("Network error. Please try again.")
