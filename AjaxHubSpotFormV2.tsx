@@ -31,7 +31,6 @@ const FORM_CLASS = "ajax-hs-form-v2"
 const formCSS = `
 .${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:'Inter',sans-serif;font-size:${FONT_SIZE}px}
 .${FORM_CLASS} input:focus,.${FORM_CLASS} select:focus{outline:none;border-color:${INPUT_FOCUS_BORDER}!important;box-shadow:none!important}
-body.ajax-call-visible #form{display:none!important}
 `
 
 // ── Free email domains to block ──────────────────────────────
@@ -45,14 +44,16 @@ const FREE_EMAIL_DOMAINS = [
 const BILLING_SYSTEMS: { label: string; value: string }[] = [
     { label: "Clio", value: "Clio" },
     { label: "MyCase", value: "MyCase" },
-    { label: "PracticePanther", value: "Practice Panther" },
     { label: "SurePoint Finance Enterprise (LMS/Rippe)", value: "SurePoint LMS" },
     { label: "SurePoint Finance Core (Coyote)", value: "SurePoint Coyote" },
-    { label: "FileVine", value: "FileVine" },
-    { label: "ActionStep", value: "ActionStep" },
-    { label: "Smokeball", value: "Smokeball" },
-    { label: "Tabs3", value: "Tabs3" },
+    { label: "Filevine", value: "FileVine" },
+    { label: "Centerbase", value: "Centerbase" },
+    { label: "Actionstep", value: "ActionStep" },
+    { label: "PracticePanther", value: "Practice Panther" },
     { label: "CARET Legal (Zola Suite)", value: "Caret Legal" },
+    { label: "Tabs3", value: "Tabs3" },
+    { label: "LeanLaw", value: "LeanLaw" },
+    { label: "Smokeball", value: "Smokeball" },
     { label: "Other", value: "Other" },
 ]
 
@@ -113,17 +114,6 @@ export default function AjaxHubSpotFormV2(_props) {
 
     }, [])
 
-    const showCallSection = (emailVal: string) => {
-        try {
-            localStorage.setItem("ajax_last_email", emailVal)
-            sessionStorage.setItem("ajax_last_email", emailVal)
-            document.body.classList.add("ajax-call-visible")
-            setTimeout(() => {
-                document.getElementById("call")?.scrollIntoView({ behavior: "smooth" })
-            }, 50)
-        } catch {}
-    }
-
     // ── Email validation ──────────────────────────────────────
     const handleEmailBlur = () => {
         if (!email) return
@@ -182,16 +172,15 @@ export default function AjaxHubSpotFormV2(_props) {
 
             // no-cors response is always opaque — can't check status, assume success
             try { sessionStorage.removeItem(SESSION_KEY) } catch {}
-            try { localStorage.setItem("ajax_last_email", email); sessionStorage.setItem("ajax_last_email", email) } catch {}
 
-            const QUALIFIED_BILLING = ["Clio","MyCase","SurePoint LMS","SurePoint Coyote","Practice Panther","FileVine"]
+            const QUALIFIED_BILLING = ["Clio","MyCase","SurePoint LMS","SurePoint Coyote","Practice Panther","FileVine","ActionStep","Centerbase","LeanLaw","Caret Legal"]
             const SMALL_FIRM_SIZES = ["Solo","Small (1-5 TKs)"]
             const isQualifiedBilling = QUALIFIED_BILLING.includes(billingSystem)
             const isSmallFirm = SMALL_FIRM_SIZES.includes(firmSize)
 
             if (isQualifiedBilling && !isSmallFirm) {
-                setStatus("success")
-                showCallSection(email)
+                try { localStorage.setItem("ajax_last_email", email); sessionStorage.setItem("ajax_last_email", email) } catch {}
+                window.location.href = "/book-a-demo/call"
             } else if (isQualifiedBilling && isSmallFirm) {
                 window.location.href = "/express-waitlist"
             } else {
@@ -244,13 +233,6 @@ export default function AjaxHubSpotFormV2(_props) {
 
             {/* Progressive fields */}
             {showExtraFields && (<>
-                {/* Phone */}
-                <div style={fieldWrap}>
-                    <label style={labelStyle}>Phone Number</label>
-                    <input type="tel" placeholder="+1 (555) 000-0000" value={phone}
-                        onChange={(e) => setPhone(e.target.value)} style={inputStyle} />
-                </div>
-
                 {/* Billing System */}
                 <div style={fieldWrap}>
                     <label style={labelStyle}>Billing System <span style={{ color: "#e74c3c" }}>*</span></label>
@@ -285,6 +267,13 @@ export default function AjaxHubSpotFormV2(_props) {
                         <DropdownArrow />
                     </div>
                 </div>
+
+                {/* Phone */}
+                <div style={fieldWrap}>
+                    <label style={labelStyle}>Phone Number</label>
+                    <input type="tel" placeholder="+1 (555) 000-0000" value={phone}
+                        onChange={(e) => setPhone(e.target.value)} style={inputStyle} />
+                </div>
             </>)}
 
             {submitError && <div style={{ color: "#e74c3c", fontSize: 13, marginBottom: 12, lineHeight: 1.4 }}>{submitError}</div>}
@@ -292,7 +281,7 @@ export default function AjaxHubSpotFormV2(_props) {
             <button onClick={handleSubmit} disabled={status === "loading"} style={buttonBase}
                 onMouseEnter={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_HOVER_COLOR }}
                 onMouseLeave={(e) => { if (status !== "loading") (e.currentTarget as HTMLButtonElement).style.background = BUTTON_COLOR }}>
-                {status === "loading" ? "Submitting…" : "Book a Meeting"}
+                {status === "loading" ? "Submitting…" : "Next"}
             </button>
         </div>
     )
