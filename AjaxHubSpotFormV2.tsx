@@ -51,6 +51,8 @@ const BILLING_SYSTEMS: { label: string; value: string }[] = [
     { label: "Actionstep", value: "ActionStep" },
     { label: "PracticePanther", value: "Practice Panther" },
     { label: "CARET Legal (Zola Suite)", value: "Caret Legal" },
+    { label: "3E (Elite)", value: "Elite 3E" },
+    { label: "Aderant", value: "Aderant" },
     { label: "Tabs3", value: "Tabs3" },
     { label: "LeanLaw", value: "LeanLaw" },
     { label: "Smokeball", value: "Smokeball" },
