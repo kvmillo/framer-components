@@ -229,7 +229,6 @@ export default function CogentHubSpotForm(props: Props) {
         letterSpacing: "0em",
     }
     const errorStyle: React.CSSProperties = { ...helperStyle, color: ERROR_COLOR }
-    const canSubmit = isValidEmail(email)
     const buttonStyle: React.CSSProperties = {
         alignSelf: "flex-start",
         padding: BUTTON_PADDING,
@@ -243,9 +242,9 @@ export default function CogentHubSpotForm(props: Props) {
         fontWeight: 400,
         borderRadius: BUTTON_RADIUS,
         border: "none",
-        cursor: status === "loading" ? "wait" : canSubmit ? "pointer" : "not-allowed",
-        opacity: canSubmit || status === "loading" ? 1 : 0.3,
-        transition: `background ${TRANSITION}, opacity ${TRANSITION}`,
+        cursor: status === "loading" ? "wait" : "pointer",
+        opacity: 1,
+        transition: `background ${TRANSITION}`,
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
@@ -359,10 +358,10 @@ export default function CogentHubSpotForm(props: Props) {
             <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={status === "loading" || !canSubmit}
+                disabled={status === "loading"}
                 style={buttonStyle}
                 onMouseEnter={(e) => {
-                    if (status !== "loading" && canSubmit) {
+                    if (status !== "loading") {
                         (e.currentTarget as HTMLButtonElement).style.background = BUTTON_BG_HOVER
                     }
                 }}
