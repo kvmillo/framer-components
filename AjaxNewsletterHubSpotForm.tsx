@@ -200,13 +200,17 @@ export default function AjaxNewsletterHubSpotForm({
   outline: none !important;
 }
 
-/* Hide images (and rich text blocks containing only an image) */
-.hs-form-html img {
+/* Hide the HubSpot template banner image.
+   The newsletter template renders the image as an inline
+   background-image on .hsfc-Step__Banner (not an <img>),
+   so hiding that element is what actually works. */
+.hs-form-html .hsfc-Step__Banner {
   display: none !important;
 }
-.hs-form-html .hs-richtext:has(img:only-child),
-.hs-form-html .hs-image,
-.hs-form-html .hs-image-widget {
+
+/* Belt-and-suspenders for other form templates */
+.hs-form-html img,
+.hs-form-html picture {
   display: none !important;
 }
             `}</style>
