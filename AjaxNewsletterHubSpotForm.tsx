@@ -46,11 +46,11 @@ export default function AjaxNewsletterHubSpotForm({
   --hsf-row__vertical-spacing: 20px;
   --hsf-module__vertical-spacing: 12px;
 
-  /* Button — purple pill, matches Ajax lead form */
+  /* Button — deep indigo pill, matches Ajax brand */
   --hsf-button__font-family: inherit;
   --hsf-button__font-size: 15px;
   --hsf-button__color: #ffffff;
-  --hsf-button__background-color: #6B4EFF;
+  --hsf-button__background-color: #3B06E9;
   --hsf-button__background-image: none;
   --hsf-button__border-radius: 100px;
   --hsf-button__padding: 14px 32px;
@@ -87,21 +87,21 @@ export default function AjaxNewsletterHubSpotForm({
 
   /* Field Label */
   --hsf-field-label__font-family: inherit;
-  --hsf-field-label__font-size: 14px;
-  --hsf-field-label__color: #aaaaaa;
+  --hsf-field-label__font-size: 15px;
+  --hsf-field-label__color: #1a1a1a;
   --hsf-field-label-requiredindicator__color: #e74c3c;
   --hsf-field-description__font-family: inherit;
   --hsf-field-description__color: rgba(26, 26, 26, 0.7);
   --hsf-field-footer__font-family: inherit;
   --hsf-field-footer__color: rgba(26, 26, 26, 0.7);
 
-  /* Field Input — white bg, transparent border, 10px radius */
+  /* Field Input — white bg, subtle grey border, 10px radius */
   --hsf-field-input__font-family: inherit;
   --hsf-field-input__color: #1a1a1a;
   --hsf-field-input__background-color: #ffffff;
   --hsf-field-input__placeholder-color: rgba(26, 26, 26, 0.4);
-  --hsf-field-input__border-color: transparent;
-  --hsf-field-input__border-width: 1.5px;
+  --hsf-field-input__border-color: rgba(26, 26, 26, 0.12);
+  --hsf-field-input__border-width: 1px;
   --hsf-field-input__border-style: solid;
   --hsf-field-input__border-radius: 10px;
   --hsf-field-input__padding: 14px 16px;
@@ -111,8 +111,8 @@ export default function AjaxNewsletterHubSpotForm({
   --hsf-field-textarea__color: #1a1a1a;
   --hsf-field-textarea__background-color: #ffffff;
   --hsf-field-textarea__placeholder-color: rgba(26, 26, 26, 0.4);
-  --hsf-field-textarea__border-color: transparent;
-  --hsf-field-textarea__border-width: 1.5px;
+  --hsf-field-textarea__border-color: rgba(26, 26, 26, 0.12);
+  --hsf-field-textarea__border-width: 1px;
   --hsf-field-textarea__border-style: solid;
   --hsf-field-textarea__border-radius: 10px;
   --hsf-field-textarea__padding: 14px 16px;
@@ -184,19 +184,57 @@ export default function AjaxNewsletterHubSpotForm({
   transform: translateY(-1px);
 }
 
-/* Label weight to match Ajax lead form (fontWeight: 500, opacity: 0.85) */
+/* Label: dark + semi-bold, no opacity dim (matches lead form render) */
 .hs-form-html label,
 .hs-form-html .hs-form-field label {
-  font-weight: 500 !important;
-  opacity: 0.85;
+  font-family: inherit !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #1a1a1a !important;
+  opacity: 1 !important;
 }
 
-/* Focus ring to match Ajax lead form (#6B4EFF at 20% alpha) */
+/* Enforce input appearance — HubSpot's template CSS sometimes wins
+   over the CSS vars, so lock it down with direct selectors. */
+.hs-form-html input[type="text"],
+.hs-form-html input[type="email"],
+.hs-form-html input[type="tel"],
+.hs-form-html input[type="number"],
+.hs-form-html input[type="date"],
+.hs-form-html input[type="url"],
+.hs-form-html input[type="password"],
+.hs-form-html select,
+.hs-form-html textarea {
+  font-family: inherit !important;
+  font-size: 15px !important;
+  color: #1a1a1a !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(26, 26, 26, 0.12) !important;
+  border-radius: 10px !important;
+  padding: 14px 16px !important;
+}
+
+/* Button: deep indigo pill, full-width, bold white label */
+.hs-form-html button[type="submit"],
+.hs-form-html input[type="submit"],
+.hs-form-html .hs-button {
+  font-family: inherit !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  background-color: #3B06E9 !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: 100px !important;
+  padding: 14px 32px !important;
+}
+
+/* Focus ring in matching indigo */
 .hs-form-html input:focus,
 .hs-form-html select:focus,
 .hs-form-html textarea:focus {
-  border-color: #6B4EFF !important;
-  box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.2) !important;
+  border-color: #3B06E9 !important;
+  box-shadow: 0 0 0 3px rgba(59, 6, 233, 0.2) !important;
   outline: none !important;
 }
             `}</style>
