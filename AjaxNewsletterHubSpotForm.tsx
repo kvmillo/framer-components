@@ -46,11 +46,11 @@ export default function AjaxNewsletterHubSpotForm({
   --hsf-row__vertical-spacing: 20px;
   --hsf-module__vertical-spacing: 12px;
 
-  /* Button — deep indigo pill, matches Ajax brand */
+  /* Button — from ajax-hubspot-form-v2.tsx lines 510-524 */
   --hsf-button__font-family: inherit;
   --hsf-button__font-size: 15px;
   --hsf-button__color: #ffffff;
-  --hsf-button__background-color: #3B06E9;
+  --hsf-button__background-color: #6B4EFF;
   --hsf-button__background-image: none;
   --hsf-button__border-radius: 100px;
   --hsf-button__padding: 14px 32px;
@@ -85,23 +85,24 @@ export default function AjaxNewsletterHubSpotForm({
   --hsf-infoalert__font-size: 14px;
   --hsf-infoalert__color: rgba(26, 26, 26, 0.7);
 
-  /* Field Label */
+  /* Field Label — from ajax-hubspot-form-v2.tsx lines 310-318 */
   --hsf-field-label__font-family: inherit;
-  --hsf-field-label__font-size: 15px;
-  --hsf-field-label__color: #1a1a1a;
+  --hsf-field-label__font-size: 14px;
+  --hsf-field-label__color: #aaaaaa;
   --hsf-field-label-requiredindicator__color: #e74c3c;
   --hsf-field-description__font-family: inherit;
   --hsf-field-description__color: rgba(26, 26, 26, 0.7);
   --hsf-field-footer__font-family: inherit;
   --hsf-field-footer__color: rgba(26, 26, 26, 0.7);
 
-  /* Field Input — white bg, subtle grey border, 10px radius */
+  /* Field Input — from ajax-hubspot-form-v2.tsx lines 295-308
+     (1.5px solid transparent border, 10px radius, 14/16 padding) */
   --hsf-field-input__font-family: inherit;
   --hsf-field-input__color: #1a1a1a;
   --hsf-field-input__background-color: #ffffff;
   --hsf-field-input__placeholder-color: rgba(26, 26, 26, 0.4);
-  --hsf-field-input__border-color: rgba(26, 26, 26, 0.12);
-  --hsf-field-input__border-width: 1px;
+  --hsf-field-input__border-color: transparent;
+  --hsf-field-input__border-width: 1.5px;
   --hsf-field-input__border-style: solid;
   --hsf-field-input__border-radius: 10px;
   --hsf-field-input__padding: 14px 16px;
@@ -111,8 +112,8 @@ export default function AjaxNewsletterHubSpotForm({
   --hsf-field-textarea__color: #1a1a1a;
   --hsf-field-textarea__background-color: #ffffff;
   --hsf-field-textarea__placeholder-color: rgba(26, 26, 26, 0.4);
-  --hsf-field-textarea__border-color: rgba(26, 26, 26, 0.12);
-  --hsf-field-textarea__border-width: 1px;
+  --hsf-field-textarea__border-color: transparent;
+  --hsf-field-textarea__border-width: 1.5px;
   --hsf-field-textarea__border-style: solid;
   --hsf-field-textarea__border-radius: 10px;
   --hsf-field-textarea__padding: 14px 16px;
@@ -184,18 +185,22 @@ export default function AjaxNewsletterHubSpotForm({
   transform: translateY(-1px);
 }
 
-/* Label: dark + semi-bold, no opacity dim (matches lead form render) */
+/* Label — from ajax-hubspot-form-v2.tsx labelStyle (lines 310-318):
+   fontSize 14, fontWeight 500, color #aaaaaa, opacity 0.85,
+   marginBottom 8 (label→input gap), fontFamily inherit */
 .hs-form-html label,
 .hs-form-html .hs-form-field label {
   font-family: inherit !important;
-  font-size: 15px !important;
-  font-weight: 600 !important;
-  color: #1a1a1a !important;
-  opacity: 1 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #aaaaaa !important;
+  opacity: 0.85 !important;
+  margin-bottom: 8px !important;
 }
 
-/* Enforce input appearance — HubSpot's template CSS sometimes wins
-   over the CSS vars, so lock it down with direct selectors. */
+/* Input — from ajax-hubspot-form-v2.tsx inputStyle (lines 295-308):
+   fontSize 15, color #1a1a1a, bg #ffffff, border 1.5px solid transparent,
+   borderRadius 10, padding 14px 16px, fontFamily inherit */
 .hs-form-html input[type="text"],
 .hs-form-html input[type="email"],
 .hs-form-html input[type="tel"],
@@ -209,12 +214,18 @@ export default function AjaxNewsletterHubSpotForm({
   font-size: 15px !important;
   color: #1a1a1a !important;
   background-color: #ffffff !important;
-  border: 1px solid rgba(26, 26, 26, 0.12) !important;
+  border: 1.5px solid transparent !important;
   border-radius: 10px !important;
   padding: 14px 16px !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-/* Button: deep indigo pill, full-width, bold white label */
+/* Button — from ajax-hubspot-form-v2.tsx button style (lines 510-524):
+   padding 14px 32px, bg #6B4EFF, color #fff, fontSize 15,
+   fontWeight 700, border none, borderRadius 100, letterSpacing 0.01em */
 .hs-form-html button[type="submit"],
 .hs-form-html input[type="submit"],
 .hs-form-html .hs-button {
@@ -222,19 +233,30 @@ export default function AjaxNewsletterHubSpotForm({
   font-size: 15px !important;
   font-weight: 700 !important;
   color: #ffffff !important;
-  background-color: #3B06E9 !important;
+  background-color: #6B4EFF !important;
   background-image: none !important;
   border: none !important;
   border-radius: 100px !important;
   padding: 14px 32px !important;
+  letter-spacing: 0.01em !important;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
 }
 
-/* Focus ring in matching indigo */
+.hs-form-html button[type="submit"]:hover:not(:disabled),
+.hs-form-html input[type="submit"]:hover:not(:disabled),
+.hs-form-html .hs-button:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+/* Focus — from ajax-hubspot-form-v2.tsx onFocus (lines 322-325):
+   borderColor = buttonColor, boxShadow = 0 0 0 3px buttonColor33 */
 .hs-form-html input:focus,
 .hs-form-html select:focus,
 .hs-form-html textarea:focus {
-  border-color: #3B06E9 !important;
-  box-shadow: 0 0 0 3px rgba(59, 6, 233, 0.2) !important;
+  border-color: #6B4EFF !important;
+  box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.2) !important;
   outline: none !important;
 }
             `}</style>
