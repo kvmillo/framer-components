@@ -199,6 +199,16 @@ export default function AjaxNewsletterHubSpotForm({
   box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.2) !important;
   outline: none !important;
 }
+
+/* Hide images (and rich text blocks containing only an image) */
+.hs-form-html img {
+  display: none !important;
+}
+.hs-form-html .hs-richtext:has(img:only-child),
+.hs-form-html .hs-image,
+.hs-form-html .hs-image-widget {
+  display: none !important;
+}
             `}</style>
 
             <div
