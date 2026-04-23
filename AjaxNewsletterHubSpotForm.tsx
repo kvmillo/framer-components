@@ -58,10 +58,11 @@ export default function AjaxNewsletterHubSpotForm({
   --hsf-global__color: #010E2E;
   --hsf-global-error__color: #e74c3c;
 
-  /* Row Spacing */
+  /* Row Spacing — module spacing bumped to match row gap so the
+     button-to-last-field gap matches the field-to-field gap. */
   --hsf-row__horizontal-spacing: 16px;
   --hsf-row__vertical-spacing: 24px;
-  --hsf-module__vertical-spacing: 12px;
+  --hsf-module__vertical-spacing: 24px;
 
   /* Button */
   --hsf-button__font-family: 'Inter', sans-serif;
@@ -286,6 +287,16 @@ export default function AjaxNewsletterHubSpotForm({
   border-color: #3804E6 !important;
   box-shadow: none !important;
   outline: none !important;
+}
+
+/* Submit-button row — force 24px gap from the preceding field row so
+   it matches field-to-field spacing exactly. Covers both the wrapper
+   row and common HubSpot submit-module class names. */
+.hs-form-html .hsfc-Form__Submit,
+.hs-form-html .hs-submit,
+.hs-form-html [class*="FormSubmit"],
+.hs-form-html [class*="SubmitButton"] {
+  margin-top: 24px !important;
 }
             `}</style>
 
