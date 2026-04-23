@@ -34,36 +34,53 @@ export default function AjaxNewsletterHubSpotForm({
     return (
         <div style={{ width: "100%" }}>
             <style>{`
+/*
+  All values mirror framer-components/AjaxHubSpotFormV2.tsx design tokens:
+    LABEL_COLOR        = #010E2E
+    INPUT_BG           = #ffffff
+    INPUT_BORDER       = rgba(0,0,0,0.2)
+    INPUT_FOCUS_BORDER = #3804E6
+    INPUT_RADIUS       = 8
+    FONT_SIZE          = 16
+    INPUT_COLOR        = #010E2E
+    PLACEHOLDER_COLOR  = rgba(0,0,0,0.5)
+    BUTTON_COLOR       = #3804E6
+    BUTTON_HOVER_COLOR = #2D08FF
+    BUTTON_RADIUS      = 48
+    FIELD_GAP          = 24 (between fields)
+    LABEL_INPUT_GAP    = 12 (between label and input)
+*/
+
 :root {
   /* Global */
-  --hsf-global__font-family: inherit;
-  --hsf-global__font-size: 15px;
-  --hsf-global__color: #1a1a1a;
+  --hsf-global__font-family: 'Inter', sans-serif;
+  --hsf-global__font-size: 16px;
+  --hsf-global__color: #010E2E;
   --hsf-global-error__color: #e74c3c;
 
   /* Row Spacing */
   --hsf-row__horizontal-spacing: 16px;
-  --hsf-row__vertical-spacing: 20px;
+  --hsf-row__vertical-spacing: 24px;
   --hsf-module__vertical-spacing: 12px;
 
-  /* Button — from ajax-hubspot-form-v2.tsx lines 510-524 */
-  --hsf-button__font-family: inherit;
-  --hsf-button__font-size: 15px;
+  /* Button */
+  --hsf-button__font-family: 'Inter', sans-serif;
+  --hsf-button__font-size: 16px;
   --hsf-button__color: #ffffff;
-  --hsf-button__background-color: #6B4EFF;
+  --hsf-button__background-color: #3804E6;
   --hsf-button__background-image: none;
-  --hsf-button__border-radius: 100px;
-  --hsf-button__padding: 14px 32px;
+  --hsf-button__border-radius: 48px;
+  --hsf-button__padding: 12px 24px;
   --hsf-button__box-shadow: none;
 
   /* Rich Text */
-  --hsf-richtext__font-family: inherit;
-  --hsf-richtext__font-size: 15px;
-  --hsf-richtext__color: #1a1a1a;
+  --hsf-richtext__font-family: 'Inter', sans-serif;
+  --hsf-richtext__font-size: 16px;
+  --hsf-richtext__color: #010E2E;
 
   /* Heading */
-  --hsf-heading__font-family: inherit;
-  --hsf-heading__color: #1a1a1a;
+  --hsf-heading__font-family: 'Inter', sans-serif;
+  --hsf-heading__color: #010E2E;
   --hsf-heading__text-shadow: none;
 
   /* Background */
@@ -76,61 +93,60 @@ export default function AjaxNewsletterHubSpotForm({
   --hsf-background__padding: 0px;
 
   /* Error Alert */
-  --hsf-erroralert__font-family: inherit;
+  --hsf-erroralert__font-family: 'Inter', sans-serif;
   --hsf-erroralert__font-size: 13px;
   --hsf-erroralert__color: #e74c3c;
 
   /* Info Alert */
-  --hsf-infoalert__font-family: inherit;
+  --hsf-infoalert__font-family: 'Inter', sans-serif;
   --hsf-infoalert__font-size: 14px;
-  --hsf-infoalert__color: rgba(26, 26, 26, 0.7);
+  --hsf-infoalert__color: rgba(1, 14, 46, 0.7);
 
-  /* Field Label — from ajax-hubspot-form-v2.tsx lines 310-318 */
-  --hsf-field-label__font-family: inherit;
-  --hsf-field-label__font-size: 14px;
-  --hsf-field-label__color: #aaaaaa;
+  /* Field Label */
+  --hsf-field-label__font-family: 'Inter', sans-serif;
+  --hsf-field-label__font-size: 16px;
+  --hsf-field-label__color: #010E2E;
   --hsf-field-label-requiredindicator__color: #e74c3c;
-  --hsf-field-description__font-family: inherit;
-  --hsf-field-description__color: rgba(26, 26, 26, 0.7);
-  --hsf-field-footer__font-family: inherit;
-  --hsf-field-footer__color: rgba(26, 26, 26, 0.7);
+  --hsf-field-description__font-family: 'Inter', sans-serif;
+  --hsf-field-description__color: rgba(1, 14, 46, 0.7);
+  --hsf-field-footer__font-family: 'Inter', sans-serif;
+  --hsf-field-footer__color: rgba(1, 14, 46, 0.7);
 
-  /* Field Input — from ajax-hubspot-form-v2.tsx lines 295-308
-     (1.5px solid transparent border, 10px radius, 14/16 padding) */
-  --hsf-field-input__font-family: inherit;
-  --hsf-field-input__color: #1a1a1a;
+  /* Field Input */
+  --hsf-field-input__font-family: 'Inter', sans-serif;
+  --hsf-field-input__color: #010E2E;
   --hsf-field-input__background-color: #ffffff;
-  --hsf-field-input__placeholder-color: rgba(26, 26, 26, 0.4);
-  --hsf-field-input__border-color: transparent;
-  --hsf-field-input__border-width: 1.5px;
+  --hsf-field-input__placeholder-color: rgba(0, 0, 0, 0.5);
+  --hsf-field-input__border-color: rgba(0, 0, 0, 0.2);
+  --hsf-field-input__border-width: 1px;
   --hsf-field-input__border-style: solid;
-  --hsf-field-input__border-radius: 10px;
-  --hsf-field-input__padding: 14px 16px;
+  --hsf-field-input__border-radius: 8px;
+  --hsf-field-input__padding: 12px 16px;
 
   /* Field Textarea */
-  --hsf-field-textarea__font-family: inherit;
-  --hsf-field-textarea__color: #1a1a1a;
+  --hsf-field-textarea__font-family: 'Inter', sans-serif;
+  --hsf-field-textarea__color: #010E2E;
   --hsf-field-textarea__background-color: #ffffff;
-  --hsf-field-textarea__placeholder-color: rgba(26, 26, 26, 0.4);
-  --hsf-field-textarea__border-color: transparent;
-  --hsf-field-textarea__border-width: 1.5px;
+  --hsf-field-textarea__placeholder-color: rgba(0, 0, 0, 0.5);
+  --hsf-field-textarea__border-color: rgba(0, 0, 0, 0.2);
+  --hsf-field-textarea__border-width: 1px;
   --hsf-field-textarea__border-style: solid;
-  --hsf-field-textarea__border-radius: 10px;
-  --hsf-field-textarea__padding: 14px 16px;
+  --hsf-field-textarea__border-radius: 8px;
+  --hsf-field-textarea__padding: 12px 16px;
 
   /* Field Checkbox */
   --hsf-field-checkbox__padding: 2px;
   --hsf-field-checkbox__background-color: #ffffff;
-  --hsf-field-checkbox__color: #1a1a1a;
-  --hsf-field-checkbox__border-color: rgba(26, 26, 26, 0.16);
+  --hsf-field-checkbox__color: #010E2E;
+  --hsf-field-checkbox__border-color: rgba(0, 0, 0, 0.2);
   --hsf-field-checkbox__border-width: 1px;
   --hsf-field-checkbox__border-style: solid;
 
   /* Field Radio */
   --hsf-field-radio__padding: 2px;
   --hsf-field-radio__background-color: #ffffff;
-  --hsf-field-radio__color: #1a1a1a;
-  --hsf-field-radio__border-color: rgba(26, 26, 26, 0.16);
+  --hsf-field-radio__color: #010E2E;
+  --hsf-field-radio__border-color: rgba(0, 0, 0, 0.2);
   --hsf-field-radio__border-width: 1px;
   --hsf-field-radio__border-style: solid;
 }
@@ -185,22 +201,24 @@ export default function AjaxNewsletterHubSpotForm({
   transform: translateY(-1px);
 }
 
-/* Label — from ajax-hubspot-form-v2.tsx labelStyle (lines 310-318):
-   fontSize 14, fontWeight 500, color #aaaaaa, opacity 0.85,
-   marginBottom 8 (label→input gap), fontFamily inherit */
+/* Label — mirrors labelStyle in AjaxHubSpotFormV2.tsx (lines 204-207):
+   fontSize 16, fontWeight 400, color #010E2E, lineHeight 1em,
+   fontFamily 'Inter' sans-serif, marginBottom 12 (LABEL_INPUT_GAP) */
 .hs-form-html label,
 .hs-form-html .hs-form-field label {
-  font-family: inherit !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  color: #aaaaaa !important;
-  opacity: 0.85 !important;
-  margin-bottom: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1em !important;
+  color: #010E2E !important;
+  opacity: 1 !important;
+  margin-bottom: 12px !important;
 }
 
-/* Input — from ajax-hubspot-form-v2.tsx inputStyle (lines 295-308):
-   fontSize 15, color #1a1a1a, bg #ffffff, border 1.5px solid transparent,
-   borderRadius 10, padding 14px 16px, fontFamily inherit */
+/* Input — mirrors inputStyle in AjaxHubSpotFormV2.tsx (lines 198-203):
+   padding 12px 16px, fontSize 16, lineHeight 1.5em, color #010E2E,
+   bg #ffffff, border 1px solid rgba(0,0,0,0.2), borderRadius 8,
+   fontFamily 'Inter' sans-serif, appearance none */
 .hs-form-html input[type="text"],
 .hs-form-html input[type="email"],
 .hs-form-html input[type="tel"],
@@ -210,53 +228,63 @@ export default function AjaxNewsletterHubSpotForm({
 .hs-form-html input[type="password"],
 .hs-form-html select,
 .hs-form-html textarea {
-  font-family: inherit !important;
-  font-size: 15px !important;
-  color: #1a1a1a !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 16px !important;
+  line-height: 1.5em !important;
+  color: #010E2E !important;
   background-color: #ffffff !important;
-  border: 1.5px solid transparent !important;
-  border-radius: 10px !important;
-  padding: 14px 16px !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
   outline: none !important;
   appearance: none !important;
   -webkit-appearance: none !important;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s;
 }
 
-/* Button — from ajax-hubspot-form-v2.tsx button style (lines 510-524):
-   padding 14px 32px, bg #6B4EFF, color #fff, fontSize 15,
-   fontWeight 700, border none, borderRadius 100, letterSpacing 0.01em */
+/* Placeholder — mirrors scoped CSS in AjaxHubSpotFormV2.tsx (lines 31-34):
+   rgba(0,0,0,0.5), Inter 16px */
+.hs-form-html input::placeholder,
+.hs-form-html textarea::placeholder {
+  color: rgba(0, 0, 0, 0.5) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 16px !important;
+}
+
+/* Button — mirrors buttonBase in AjaxHubSpotFormV2.tsx (lines 212-219):
+   padding 12px 24px, bg #3804E6, color #fff, fontSize 16,
+   fontWeight 500, border none, borderRadius 48, fontFamily 'Inter' */
 .hs-form-html button[type="submit"],
 .hs-form-html input[type="submit"],
 .hs-form-html .hs-button {
-  font-family: inherit !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  line-height: 1.5em !important;
   color: #ffffff !important;
-  background-color: #6B4EFF !important;
+  background-color: #3804E6 !important;
   background-image: none !important;
   border: none !important;
-  border-radius: 100px !important;
-  padding: 14px 32px !important;
-  letter-spacing: 0.01em !important;
+  border-radius: 48px !important;
+  padding: 12px 24px !important;
+  letter-spacing: 0em !important;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: background-color 0.15s;
 }
 
 .hs-form-html button[type="submit"]:hover:not(:disabled),
 .hs-form-html input[type="submit"]:hover:not(:disabled),
 .hs-form-html .hs-button:hover:not(:disabled) {
-  opacity: 0.88;
-  transform: translateY(-1px);
+  background-color: #2D08FF !important;
 }
 
-/* Focus — from ajax-hubspot-form-v2.tsx onFocus (lines 322-325):
-   borderColor = buttonColor, boxShadow = 0 0 0 3px buttonColor33 */
+/* Focus — mirrors scoped CSS in AjaxHubSpotFormV2.tsx (lines 31-34):
+   border-color #3804E6, box-shadow explicitly none (no ring) */
 .hs-form-html input:focus,
 .hs-form-html select:focus,
 .hs-form-html textarea:focus {
-  border-color: #6B4EFF !important;
-  box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.2) !important;
+  border-color: #3804E6 !important;
+  box-shadow: none !important;
   outline: none !important;
 }
             `}</style>
