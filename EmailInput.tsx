@@ -6,6 +6,7 @@ import { useState, useMemo, useRef, useId, startTransition, type CSSProperties }
  * Drop inside a Framer Form — uses setCustomValidity() so the form
  * natively refuses to submit when the domain is blocked or format is invalid.
  *
+ * @framerDisableUnlink
  * @framerIntrinsicWidth 360
  * @framerIntrinsicHeight 96
  * @framerSupportedLayoutWidth any-prefer-fixed
