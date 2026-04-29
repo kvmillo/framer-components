@@ -4,7 +4,7 @@
 // Custom-styled HubSpot form:
 //   · Custom CSS styling (matches Framer design tokens)
 //   · UTM auto-capture (persisted via sessionStorage)
-//   · 5 hidden field slots (name + value pairs via property controls)
+//   · CID via dedicated property control
 //   · Custom success state: renders a Framer ComponentInstance when submission succeeds
 //   · Uses HubSpot v2 endpoint so notifications/workflows still fire
 
@@ -38,6 +38,7 @@ const HELPER_LINE_HEIGHT = "1.4em"
 const INPUT_BG = "#FFFFFF"
 const BORDER_DEFAULT = "#D3DBDD"
 const BORDER_FOCUS = "#A6B1BC"
+const BORDER_HOVER = "#A6B1BC"
 const BORDER_ERROR = "#DA5C57"
 const INPUT_RADIUS = 6
 const INPUT_PADDING = 10
@@ -45,6 +46,13 @@ const LABEL_GAP = 4
 const ROW_GAP = 30
 const COL_GAP = 20
 const TRANSITION = "150ms ease"
+
+const CHECKBOX_SIZE = 16
+const CHECKBOX_RADIUS = 2
+const CHECKBOX_INNER_SIZE = 8
+const CHECKBOX_INNER_COLOR = "#D8813E"
+const CHECKBOX_LABEL_COLOR = "#636D7A"
+const CHECKBOX_GAP = 8
 
 const BUTTON_BG = "#111112"
 const BUTTON_BG_HOVER = "#232325"
@@ -62,8 +70,9 @@ const BUTTON_HEIGHT = 42
 const FORM_CLASS = "cogent-hs-form"
 const formCSS = `
 .${FORM_CLASS} input::placeholder{color:${PLACEHOLDER_COLOR};font-family:${FONT};font-size:${INPUT_SIZE}px;line-height:${INPUT_LINE_HEIGHT};letter-spacing:0em;opacity:1}
-.${FORM_CLASS} input:focus{outline:none;box-shadow:none}
-.${FORM_CLASS} button:focus{outline:none}
+.${FORM_CLASS} input:focus,.${FORM_CLASS} button:focus{outline:none;box-shadow:none}
+.${FORM_CLASS} .cogent-checkbox-row:hover .cogent-checkbox-box{border-color:${BORDER_HOVER}}
+.${FORM_CLASS} .cogent-checkbox-row:focus-within .cogent-checkbox-box{border-color:${BORDER_FOCUS}}
 .${FORM_CLASS} .cogent-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:cogent-spin 0.7s linear infinite;display:inline-block}
 @keyframes cogent-spin{to{transform:rotate(360deg)}}
 `
@@ -88,29 +97,21 @@ function captureAndPersistParams(): Record<string, string> {
 
 // ── Types ───────────────────────────────────────────────────
 type Props = {
-    hidden1Name?: string
-    hidden1Value?: string
-    hidden2Name?: string
-    hidden2Value?: string
-    hidden3Name?: string
-    hidden3Value?: string
-    hidden4Name?: string
-    hidden4Value?: string
-    hidden5Name?: string
-    hidden5Value?: string
+    cidValue?: string
     successContent?: React.ReactNode
     style?: React.CSSProperties
 }
 
 // ── Component ───────────────────────────────────────────────
 export default function CogentHubSpotForm(props: Props) {
-    const { successContent, style } = props
+    const { cidValue, successContent, style } = props
 
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
     const [email, setEmail] = useState("")
-    const [jobTitle, setJobTitle] = useState("")
-    const [emailError, setEmailError] = useState("")
+    const [companyName, setCompanyName] = useState("")
+    const [optinSubscriber, setOptinSubscriber] = useState(false)
+    const [errors, setErrors] = useState<Record<string, string>>({})
     const [submitError, setSubmitError] = useState("")
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
     const [focused, setFocused] = useState<string>("")
@@ -126,24 +127,30 @@ export default function CogentHubSpotForm(props: Props) {
         }
     }, [])
 
-    const handleEmailBlur = () => {
-        setFocused("")
-        if (email && !isValidEmail(email)) {
-            setEmailError("Please enter a valid email address.")
+    const clearError = (field: string) => {
+        if (errors[field]) {
+            setErrors(prev => {
+                const next = { ...prev }
+                delete next[field]
+                return next
+            })
         }
     }
-    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEmail(e.target.value)
-        if (emailError) setEmailError("")
+
+    const validate = (): boolean => {
+        const next: Record<string, string> = {}
+        if (!firstName.trim()) next.firstname = "Required"
+        if (!lastName.trim()) next.lastname = "Required"
+        if (!email.trim()) next.email = "Required"
+        else if (!isValidEmail(email)) next.email = "Please enter a valid email address."
+        if (!companyName.trim()) next.company = "Required"
+        setErrors(next)
+        return Object.keys(next).length === 0
     }
 
     const handleSubmit = async () => {
-        if (!isValidEmail(email)) {
-            setEmailError("Please enter a valid email address.")
-            return
-        }
-        setEmailError("")
         setSubmitError("")
+        if (!validate()) return
         setStatus("loading")
 
         let tracked: Record<string, string> = {}
@@ -154,18 +161,15 @@ export default function CogentHubSpotForm(props: Props) {
             { name: "firstname", value: firstName },
             { name: "lastname", value: lastName },
             { name: "email", value: email },
-            { name: "jobtitle", value: jobTitle },
+            { name: "name", value: companyName },
+            { name: "optin_subscriber", value: optinSubscriber ? "true" : "false" },
             { name: "utm_source", value: tracked.utm_source || "" },
             { name: "utm_medium", value: tracked.utm_medium || "" },
             { name: "utm_campaign", value: tracked.utm_campaign || "" },
             { name: "utm_term", value: tracked.utm_term || "" },
             { name: "utm_content", value: tracked.utm_content || "" },
+            { name: "cid", value: cidValue || "" },
         ]
-        for (let i = 1; i <= 5; i++) {
-            const name = (props as any)[`hidden${i}Name`] as string | undefined
-            const value = (props as any)[`hidden${i}Value`] as string | undefined
-            if (name && value) hsFields.push({ name, value })
-        }
         const filtered = hsFields.filter(f => f.value !== "")
 
         try {
@@ -273,6 +277,52 @@ export default function CogentHubSpotForm(props: Props) {
         fontFamily: FONT,
         ...style,
     }
+    const checkboxRowStyle: React.CSSProperties = {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: CHECKBOX_GAP,
+        cursor: "pointer",
+        userSelect: "none",
+    }
+    const checkboxBoxStyle: React.CSSProperties = {
+        width: CHECKBOX_SIZE,
+        height: CHECKBOX_SIZE,
+        background: INPUT_BG,
+        border: `1px solid ${BORDER_DEFAULT}`,
+        borderRadius: CHECKBOX_RADIUS,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        transition: `border-color ${TRANSITION}`,
+        boxSizing: "border-box",
+    }
+    const checkboxInnerStyle: React.CSSProperties = {
+        width: CHECKBOX_INNER_SIZE,
+        height: CHECKBOX_INNER_SIZE,
+        background: CHECKBOX_INNER_COLOR,
+        opacity: optinSubscriber ? 1 : 0,
+        transition: `opacity ${TRANSITION}`,
+    }
+    const checkboxLabelStyle: React.CSSProperties = {
+        fontFamily: FONT,
+        fontSize: 16,
+        lineHeight: "1.4em",
+        letterSpacing: "-0.02em",
+        color: CHECKBOX_LABEL_COLOR,
+    }
+    const visuallyHidden: React.CSSProperties = {
+        position: "absolute",
+        width: 1,
+        height: 1,
+        padding: 0,
+        margin: -1,
+        overflow: "hidden",
+        clip: "rect(0, 0, 0, 0)",
+        whiteSpace: "nowrap",
+        border: 0,
+    }
 
     // ── Render ─────────────────────────────────────────────
     if (status === "success") {
@@ -289,33 +339,39 @@ export default function CogentHubSpotForm(props: Props) {
 
     return (
         <div className={FORM_CLASS} style={formStyle}>
-            {/* Row 1: First name + Last name */}
+            {/* Row 1: First name + Last name (both required) */}
             <div style={rowStyle}>
                 <div style={{ ...fieldWrap, flex: "1 1 160px" }}>
-                    <label style={labelStyle}>First name</label>
+                    <label style={labelStyle}>
+                        First name<span style={requiredStyle}>*</span>
+                    </label>
                     <input
                         type="text"
                         placeholder="Jane"
                         value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        onChange={(e) => { setFirstName(e.target.value); clearError("firstname") }}
                         onFocus={() => setFocused("firstname")}
                         onBlur={() => setFocused("")}
-                        style={inputStyle("firstname", false)}
+                        style={inputStyle("firstname", !!errors.firstname)}
                         autoComplete="given-name"
                     />
+                    {errors.firstname && <div style={errorStyle}>{errors.firstname}</div>}
                 </div>
                 <div style={{ ...fieldWrap, flex: "1 1 160px" }}>
-                    <label style={labelStyle}>Last name</label>
+                    <label style={labelStyle}>
+                        Last name<span style={requiredStyle}>*</span>
+                    </label>
                     <input
                         type="text"
                         placeholder="Doe"
                         value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
+                        onChange={(e) => { setLastName(e.target.value); clearError("lastname") }}
                         onFocus={() => setFocused("lastname")}
                         onBlur={() => setFocused("")}
-                        style={inputStyle("lastname", false)}
+                        style={inputStyle("lastname", !!errors.lastname)}
                         autoComplete="family-name"
                     />
+                    {errors.lastname && <div style={errorStyle}>{errors.lastname}</div>}
                 </div>
             </div>
 
@@ -328,30 +384,47 @@ export default function CogentHubSpotForm(props: Props) {
                     type="email"
                     placeholder="jane@company.com"
                     value={email}
-                    onChange={handleEmailChange}
+                    onChange={(e) => { setEmail(e.target.value); clearError("email") }}
                     onFocus={() => setFocused("email")}
-                    onBlur={handleEmailBlur}
-                    style={inputStyle("email", !!emailError)}
+                    onBlur={() => setFocused("")}
+                    style={inputStyle("email", !!errors.email)}
                     autoComplete="email"
                     required
                 />
-                {emailError && <div style={errorStyle}>{emailError}</div>}
+                {errors.email && <div style={errorStyle}>{errors.email}</div>}
             </div>
 
-            {/* Row 3: Job title */}
+            {/* Row 3: Company name (required) */}
             <div style={fieldWrap}>
-                <label style={labelStyle}>Job title</label>
+                <label style={labelStyle}>
+                    Company name<span style={requiredStyle}>*</span>
+                </label>
                 <input
                     type="text"
-                    placeholder="Marketing Manager"
-                    value={jobTitle}
-                    onChange={(e) => setJobTitle(e.target.value)}
-                    onFocus={() => setFocused("jobtitle")}
+                    placeholder="Acme Inc."
+                    value={companyName}
+                    onChange={(e) => { setCompanyName(e.target.value); clearError("company") }}
+                    onFocus={() => setFocused("company")}
                     onBlur={() => setFocused("")}
-                    style={inputStyle("jobtitle", false)}
-                    autoComplete="organization-title"
+                    style={inputStyle("company", !!errors.company)}
+                    autoComplete="organization"
                 />
+                {errors.company && <div style={errorStyle}>{errors.company}</div>}
             </div>
+
+            {/* Row 4: Opt-in subscriber checkbox */}
+            <label className="cogent-checkbox-row" style={checkboxRowStyle}>
+                <span className="cogent-checkbox-box" style={checkboxBoxStyle}>
+                    <span style={checkboxInnerStyle} />
+                </span>
+                <input
+                    type="checkbox"
+                    checked={optinSubscriber}
+                    onChange={(e) => setOptinSubscriber(e.target.checked)}
+                    style={visuallyHidden}
+                />
+                <span style={checkboxLabelStyle}>Subscribe to updates from Cogent</span>
+            </label>
 
             {submitError && <div style={errorStyle}>{submitError}</div>}
 
@@ -381,18 +454,14 @@ CogentHubSpotForm.displayName = "Cogent HubSpot Form"
 
 // ── Property Controls ─────────────────────────────────────
 addPropertyControls(CogentHubSpotForm, {
+    cidValue: {
+        type: ControlType.String,
+        title: "CID",
+        defaultValue: "",
+        placeholder: "Campaign ID (optional)",
+    },
     successContent: {
         type: ControlType.ComponentInstance,
         title: "Success Slot",
     },
-    hidden1Name: { type: ControlType.String, title: "Hidden 1 Name", defaultValue: "" },
-    hidden1Value: { type: ControlType.String, title: "Hidden 1 Value", defaultValue: "" },
-    hidden2Name: { type: ControlType.String, title: "Hidden 2 Name", defaultValue: "" },
-    hidden2Value: { type: ControlType.String, title: "Hidden 2 Value", defaultValue: "" },
-    hidden3Name: { type: ControlType.String, title: "Hidden 3 Name", defaultValue: "" },
-    hidden3Value: { type: ControlType.String, title: "Hidden 3 Value", defaultValue: "" },
-    hidden4Name: { type: ControlType.String, title: "Hidden 4 Name", defaultValue: "" },
-    hidden4Value: { type: ControlType.String, title: "Hidden 4 Value", defaultValue: "" },
-    hidden5Name: { type: ControlType.String, title: "Hidden 5 Name", defaultValue: "" },
-    hidden5Value: { type: ControlType.String, title: "Hidden 5 Value", defaultValue: "" },
 })
