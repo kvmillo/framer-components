@@ -73,8 +73,8 @@ const formCSS = `
 .${FORM_CLASS} input:focus,.${FORM_CLASS} button:focus{outline:none;box-shadow:none}
 .${FORM_CLASS} .cogent-checkbox-row:hover .cogent-checkbox-box{border-color:${BORDER_HOVER}}
 .${FORM_CLASS} .cogent-checkbox-row:focus-within .cogent-checkbox-box{border-color:${BORDER_FOCUS}}
-.${FORM_CLASS} .cogent-consent a{color:${INPUT_VALUE_COLOR};text-decoration:underline;transition:color ${TRANSITION}}
-.${FORM_CLASS} .cogent-consent a:hover{color:${LABEL_COLOR}}
+.${FORM_CLASS} .cogent-consent a{color:inherit;text-decoration:underline;transition:color ${TRANSITION}}
+.${FORM_CLASS} .cogent-consent a:hover{color:#111111}
 .${FORM_CLASS} .cogent-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:cogent-spin 0.7s linear infinite;display:inline-block}
 @keyframes cogent-spin{to{transform:rotate(360deg)}}
 `
