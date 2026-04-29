@@ -73,6 +73,8 @@ const formCSS = `
 .${FORM_CLASS} input:focus,.${FORM_CLASS} button:focus{outline:none;box-shadow:none}
 .${FORM_CLASS} .cogent-checkbox-row:hover .cogent-checkbox-box{border-color:${BORDER_HOVER}}
 .${FORM_CLASS} .cogent-checkbox-row:focus-within .cogent-checkbox-box{border-color:${BORDER_FOCUS}}
+.${FORM_CLASS} .cogent-consent a{color:${INPUT_VALUE_COLOR};text-decoration:underline;transition:color ${TRANSITION}}
+.${FORM_CLASS} .cogent-consent a:hover{color:${LABEL_COLOR}}
 .${FORM_CLASS} .cogent-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:cogent-spin 0.7s linear infinite;display:inline-block}
 @keyframes cogent-spin{to{transform:rotate(360deg)}}
 `
@@ -98,13 +100,14 @@ function captureAndPersistParams(): Record<string, string> {
 // ── Types ───────────────────────────────────────────────────
 type Props = {
     cidValue?: string
+    privacyUrl?: string
     successContent?: React.ReactNode
     style?: React.CSSProperties
 }
 
 // ── Component ───────────────────────────────────────────────
 export default function CogentHubSpotForm(props: Props) {
-    const { cidValue, successContent, style } = props
+    const { cidValue, privacyUrl, successContent, style } = props
 
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
@@ -312,6 +315,14 @@ export default function CogentHubSpotForm(props: Props) {
         letterSpacing: "-0.02em",
         color: CHECKBOX_LABEL_COLOR,
     }
+    const consentStyle: React.CSSProperties = {
+        fontFamily: FONT,
+        fontSize: 16,
+        lineHeight: "1.4em",
+        letterSpacing: "-0.02em",
+        color: INPUT_VALUE_COLOR,
+        margin: 0,
+    }
     const visuallyHidden: React.CSSProperties = {
         position: "absolute",
         width: 1,
@@ -426,6 +437,12 @@ export default function CogentHubSpotForm(props: Props) {
                 <span style={checkboxLabelStyle}>Subscribe to updates from Cogent</span>
             </label>
 
+            {/* Consent paragraph */}
+            <p className="cogent-consent" style={consentStyle}>
+                By clicking &ldquo;Submit,&rdquo; you agree to Cogent processing your personal data in accordance with our{" "}
+                <a href={privacyUrl || "/privacy-notice"} target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
+            </p>
+
             {submitError && <div style={errorStyle}>{submitError}</div>}
 
             <button
@@ -459,6 +476,10 @@ addPropertyControls(CogentHubSpotForm, {
         title: "CID",
         defaultValue: "",
         placeholder: "Campaign ID (optional)",
+    },
+    privacyUrl: {
+        type: ControlType.Link,
+        title: "Privacy Notice URL",
     },
     successContent: {
         type: ControlType.ComponentInstance,
