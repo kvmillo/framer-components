@@ -75,6 +75,8 @@ const formCSS = `
 .${FORM_CLASS} .cogent-checkbox-row:focus-within .cogent-checkbox-box{border-color:${BORDER_FOCUS}}
 .${FORM_CLASS} .cogent-consent a{color:inherit;text-decoration:underline;transition:color ${TRANSITION}}
 .${FORM_CLASS} .cogent-consent a:hover{color:#111111}
+.${FORM_CLASS} .cogent-success{width:100%;display:flex;flex-direction:column;align-items:stretch}
+.${FORM_CLASS} .cogent-success > *{width:100% !important;max-width:100% !important;flex:1 1 auto !important}
 .${FORM_CLASS} .cogent-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:cogent-spin 0.7s linear infinite;display:inline-block}
 @keyframes cogent-spin{to{transform:rotate(360deg)}}
 `
@@ -339,11 +341,13 @@ export default function CogentHubSpotForm(props: Props) {
     if (status === "success") {
         return (
             <div className={FORM_CLASS} style={{ width: "100%", ...style }}>
-                {successContent ?? (
-                    <div style={{ ...labelStyle, color: LABEL_COLOR }}>
-                        Thanks! We'll be in touch shortly.
-                    </div>
-                )}
+                <div className="cogent-success">
+                    {successContent ?? (
+                        <div style={{ ...labelStyle, color: LABEL_COLOR }}>
+                            Thanks! We'll be in touch shortly.
+                        </div>
+                    )}
+                </div>
             </div>
         )
     }
