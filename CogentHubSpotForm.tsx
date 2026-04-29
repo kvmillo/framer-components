@@ -375,44 +375,44 @@ export default function CogentHubSpotForm(props: Props) {
                 </div>
             </div>
 
-            {/* Row 2: Work email (required) */}
-            <div style={fieldWrap}>
-                <label style={labelStyle}>
-                    Work email<span style={requiredStyle}>*</span>
-                </label>
-                <input
-                    type="email"
-                    placeholder="jane@company.com"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); clearError("email") }}
-                    onFocus={() => setFocused("email")}
-                    onBlur={() => setFocused("")}
-                    style={inputStyle("email", !!errors.email)}
-                    autoComplete="email"
-                    required
-                />
-                {errors.email && <div style={errorStyle}>{errors.email}</div>}
+            {/* Row 2: Email + Company name (both required) */}
+            <div style={rowStyle}>
+                <div style={{ ...fieldWrap, flex: "1 1 160px" }}>
+                    <label style={labelStyle}>
+                        Email<span style={requiredStyle}>*</span>
+                    </label>
+                    <input
+                        type="email"
+                        placeholder="jane@company.com"
+                        value={email}
+                        onChange={(e) => { setEmail(e.target.value); clearError("email") }}
+                        onFocus={() => setFocused("email")}
+                        onBlur={() => setFocused("")}
+                        style={inputStyle("email", !!errors.email)}
+                        autoComplete="email"
+                        required
+                    />
+                    {errors.email && <div style={errorStyle}>{errors.email}</div>}
+                </div>
+                <div style={{ ...fieldWrap, flex: "1 1 160px" }}>
+                    <label style={labelStyle}>
+                        Company name<span style={requiredStyle}>*</span>
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="Acme Inc."
+                        value={companyName}
+                        onChange={(e) => { setCompanyName(e.target.value); clearError("company") }}
+                        onFocus={() => setFocused("company")}
+                        onBlur={() => setFocused("")}
+                        style={inputStyle("company", !!errors.company)}
+                        autoComplete="organization"
+                    />
+                    {errors.company && <div style={errorStyle}>{errors.company}</div>}
+                </div>
             </div>
 
-            {/* Row 3: Company name (required) */}
-            <div style={fieldWrap}>
-                <label style={labelStyle}>
-                    Company name<span style={requiredStyle}>*</span>
-                </label>
-                <input
-                    type="text"
-                    placeholder="Acme Inc."
-                    value={companyName}
-                    onChange={(e) => { setCompanyName(e.target.value); clearError("company") }}
-                    onFocus={() => setFocused("company")}
-                    onBlur={() => setFocused("")}
-                    style={inputStyle("company", !!errors.company)}
-                    autoComplete="organization"
-                />
-                {errors.company && <div style={errorStyle}>{errors.company}</div>}
-            </div>
-
-            {/* Row 4: Opt-in subscriber checkbox */}
+            {/* Row 3: Opt-in subscriber checkbox */}
             <label className="cogent-checkbox-row" style={checkboxRowStyle}>
                 <span className="cogent-checkbox-box" style={checkboxBoxStyle}>
                     <span style={checkboxInnerStyle} />
