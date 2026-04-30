@@ -454,41 +454,64 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   background-color: ${BUTTON_BG_HOVER} !important;
 }
 
-/* ── Row spacing — we own this entirely, no auto-stacking from HubSpot ── */
-/* Step 1: kill HubSpot's row gap and any per-row default margins. */
-.hs-form-html form {
-  gap: 0 !important;
+/* ── Row spacing — nuclear reset, then explicit re-apply ── */
+/* Step 1: kill EVERY margin/padding/gap inside the form, including
+   anything HubSpot's stylesheet adds. */
+.hs-form-html form,
+.hs-form-html form > *,
+.hs-form-html form > * > * {
+  margin: 0 !important;
   row-gap: 0 !important;
   column-gap: 0 !important;
+  gap: 0 !important;
 }
-.hs-form-html .hs-form-field,
-.hs-form-html .hs-richtext,
-.hs-form-html .hs-form-richtext,
-.hs-form-html .legal-consent-container,
-.hs-form-html .hs-submit,
-.hs-form-html .actions {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+.hs-form-html form > *,
+.hs-form-html form > * > * {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
 
-/* Step 2: explicit per-row spacing. Inputs keep 30px below; checkbox
-   and richtext drop to 12px; submit gets 0 (already explicit above). */
-.hs-form-html .hs-form-field {
-  margin-bottom: ${ROW_GAP}px !important;
+/* Step 2: re-apply input vertical padding (was killed above). */
+.hs-form-html input[type="text"],
+.hs-form-html input[type="email"],
+.hs-form-html input[type="tel"],
+.hs-form-html input[type="number"],
+.hs-form-html input[type="date"],
+.hs-form-html input[type="url"],
+.hs-form-html select,
+.hs-form-html textarea {
+  padding-top: ${INPUT_PADDING} !important;
+  padding-bottom: ${INPUT_PADDING} !important;
 }
 
-.hs-form-html .hs-fieldtype-booleancheckbox,
-.hs-form-html .hs-fieldtype-checkbox,
-.hs-form-html .hs-form-field:has(input[type="checkbox"]) {
-  margin-bottom: 12px !important;
+/* Step 3: label → input gap (HubSpot's --hsf-module__vertical-spacing
+   doesn't survive the reset, so set it explicitly). */
+.hs-form-html .hs-form-field > label,
+.hs-form-html .hs-form-field > legend,
+.hs-form-html .hs-form-field label.hs-input-label {
+  display: block !important;
+  margin-bottom: ${LABEL_GAP}px !important;
 }
 
-.hs-form-html .hs-richtext,
-.hs-form-html .hs-form-richtext,
-.hs-form-html .legal-consent-container {
-  margin-bottom: 12px !important;
+/* Step 4: vertical rhythm between rows via sibling combinator —
+   no per-row margin-bottom, so nothing can stack. Default 30px;
+   tighter (12px) when the previous sibling is checkbox/richtext. */
+.hs-form-html form > * + *,
+.hs-form-html form > * > * + * {
+  margin-top: ${ROW_GAP}px !important;
+}
+.hs-form-html form > .hs-fieldtype-booleancheckbox + *,
+.hs-form-html form > .hs-fieldtype-checkbox + *,
+.hs-form-html form > :has(> input[type="checkbox"]) + *,
+.hs-form-html form > .hs-richtext + *,
+.hs-form-html form > .hs-form-richtext + *,
+.hs-form-html form > .legal-consent-container + *,
+.hs-form-html form > * > .hs-fieldtype-booleancheckbox + *,
+.hs-form-html form > * > .hs-fieldtype-checkbox + *,
+.hs-form-html form > * > .hs-richtext + *,
+.hs-form-html form > * > .hs-form-richtext + *,
+.hs-form-html form > * > .legal-consent-container + * {
+  margin-top: 12px !important;
 }
 
 /* ── Rich text links (Privacy Notice / legal blocks) ── */
