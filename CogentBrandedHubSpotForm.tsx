@@ -119,10 +119,8 @@ export default function CogentBrandedHubSpotForm(props: Props) {
                 if (cidValue) setField("cid", cidValue)
 
                 // ── Force-fix layout via inline styles ──
-                // External CSS overrides keep losing to HubSpot's stylesheet
-                // (likely specificity/order). Inline style.setProperty with
-                // "important" wins regardless. Apply only to layout: spacing
-                // + button width. Visual styling stays in --hsf-* vars + CSS.
+                // External CSS overrides keep losing to HubSpot's stylesheet.
+                // Inline style.setProperty with "important" wins regardless.
 
                 // Submit button: natural width
                 const submitBtn = formEl.querySelector(
@@ -134,47 +132,81 @@ export default function CogentBrandedHubSpotForm(props: Props) {
                     submitBtn.style.setProperty("flex", "0 0 auto", "important")
                 }
 
-                // Form container: own its layout (no auto gap)
-                formEl.style.setProperty("display", "block", "important")
-                formEl.style.setProperty("gap", "0", "important")
-                formEl.style.setProperty("row-gap", "0", "important")
+                // Walk through any single-child wrapper chain to find the
+                // actual rows container (e.g. form > .hs-form-private > rows).
+                let rowContainer: HTMLElement = formEl
+                while (rowContainer.children.length === 1) {
+                    const onlyChild = rowContainer.firstElementChild as HTMLElement | null
+                    if (!onlyChild) break
+                    if (["INPUT","BUTTON","TEXTAREA","SELECT","LABEL"].includes(onlyChild.tagName)) break
+                    rowContainer = onlyChild
+                }
 
-                // Walk every direct child of the form, set explicit
-                // margin-bottom based on row type.
-                const isCheckboxRow = (el: Element) =>
+                // Reset any flex/grid auto-gap on form + its single-child chain
+                ;[formEl, rowContainer].forEach(el => {
+                    el.style.setProperty("display", "block", "important")
+                    el.style.setProperty("gap", "0", "important")
+                    el.style.setProperty("row-gap", "0", "important")
+                    el.style.setProperty("padding-top", "0", "important")
+                    el.style.setProperty("padding-bottom", "0", "important")
+                })
+
+                // Row classifiers
+                const hasCheckbox = (el: Element) =>
                     el.classList.contains("hs-fieldtype-booleancheckbox") ||
                     el.classList.contains("hs-fieldtype-checkbox") ||
                     !!el.querySelector('input[type="checkbox"]')
-                const isRichTextRow = (el: Element) =>
-                    el.classList.contains("hs-richtext") ||
-                    el.classList.contains("hs-form-richtext") ||
-                    el.classList.contains("legal-consent-container") ||
-                    !!el.querySelector(".hs-richtext, .hs-form-richtext, .legal-consent-container")
-                const isSubmitRow = (el: Element) =>
+                const isRichText = (el: Element) => {
+                    const cls = (el.className || "").toString().toLowerCase()
+                    return /richtext|legal|consent/.test(cls) ||
+                        !!el.querySelector(".hs-richtext, .hs-form-richtext, .legal-consent-container")
+                }
+                const isSubmit = (el: Element) =>
                     el.classList.contains("hs-submit") ||
                     el.classList.contains("actions") ||
                     !!el.querySelector('button[type="submit"], input[type="submit"]')
 
-                const applySpacing = (root: Element) => {
-                    const rows = Array.from(root.children) as HTMLElement[]
-                    rows.forEach(row => {
-                        row.style.setProperty("margin-top", "0", "important")
-                        row.style.setProperty("padding-top", "0", "important")
-                        row.style.setProperty("padding-bottom", "0", "important")
-                        let mb = "30px"
-                        if (isCheckboxRow(row) || isRichTextRow(row)) mb = "12px"
-                        if (isSubmitRow(row)) mb = "0px"
-                        row.style.setProperty("margin-bottom", mb, "important")
+                const rows = Array.from(rowContainer.children).filter(el => {
+                    const t = el.tagName.toLowerCase()
+                    return t !== "style" && t !== "script"
+                }) as HTMLElement[]
+
+                rows.forEach((row, idx) => {
+                    row.style.setProperty("margin-top", "0", "important")
+                    row.style.setProperty("padding-top", "0", "important")
+                    row.style.setProperty("padding-bottom", "0", "important")
+                    let mb = "30px"
+                    if (hasCheckbox(row) || isRichText(row)) mb = "12px"
+                    if (isSubmit(row)) mb = "0px"
+                    // Whatever is immediately above the submit row shrinks to 12px
+                    const next = rows[idx + 1]
+                    if (next && isSubmit(next)) mb = "12px"
+                    row.style.setProperty("margin-bottom", mb, "important")
+                })
+
+                // Strip stray margin/padding from everything inside the
+                // submit row (HubSpot often wraps the button in extra divs
+                // with their own padding).
+                const submitRow = rows.find(isSubmit)
+                if (submitRow) {
+                    submitRow.querySelectorAll("*").forEach(el => {
+                        const e = el as HTMLElement
+                        e.style.setProperty("margin", "0", "important")
+                        if (e.tagName !== "BUTTON" && e.tagName !== "INPUT") {
+                            e.style.setProperty("padding", "0", "important")
+                        }
                     })
                 }
-                applySpacing(formEl)
-                // Some HubSpot embeds wrap rows one level deeper — apply to
-                // grandchildren of any direct child that has its own children.
-                Array.from(formEl.children).forEach(child => {
-                    if ((child as HTMLElement).children.length > 0) {
-                        applySpacing(child)
-                    }
-                })
+
+                // eslint-disable-next-line no-console
+                console.log("[CogentBrandedHubSpotForm] rows:", rows.map(r => ({
+                    tag: r.tagName,
+                    cls: r.className,
+                    isCheckbox: hasCheckbox(r),
+                    isRichText: isRichText(r),
+                    isSubmit: isSubmit(r),
+                    mb: r.style.marginBottom,
+                })))
             }
 
             if (eventType === "onFormSubmitted") {
