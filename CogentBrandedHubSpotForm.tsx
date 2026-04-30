@@ -89,133 +89,154 @@ export default function CogentBrandedHubSpotForm(props: Props) {
         return () => { if (script.parentNode) script.parentNode.removeChild(script) }
     }, [portalId, formId, region])
 
-    // Inject hidden field values on form ready, capture submit event
+    // Inject hidden field values + apply layout fixes whenever the form
+    // renders. Triggered by both:
+    //   1. hsFormCallback events
+    //   2. MutationObserver (catches DOM updates regardless of events)
     useEffect(() => {
-        const handler = (event: Event) => {
+        if (!containerRef.current) return
+        const container = containerRef.current
+        let hiddenInjected = false
+
+        const applyHiddenFields = (formEl: HTMLFormElement) => {
+            let tracked: Record<string, string> = {}
+            try { tracked = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "{}") } catch {}
+            const setField = (name: string, value: string) => {
+                const input = formEl.querySelector(`input[name="${name}"]`) as HTMLInputElement | null
+                if (input && value) {
+                    input.value = value
+                    input.dispatchEvent(new Event("input", { bubbles: true }))
+                    input.dispatchEvent(new Event("change", { bubbles: true }))
+                }
+            }
+            ;["utm_source","utm_medium","utm_campaign","utm_term","utm_content"].forEach(k => {
+                setField(k, tracked[k] || "")
+            })
+            if (cidValue) setField("cid", cidValue)
+        }
+
+        const applyLayoutFixes = (formEl: HTMLFormElement) => {
+            // Submit button: natural width
+            const submitBtn = formEl.querySelector(
+                'button[type="submit"], input[type="submit"]'
+            ) as HTMLElement | null
+            if (submitBtn) {
+                submitBtn.style.setProperty("width", "fit-content", "important")
+                submitBtn.style.setProperty("max-width", "fit-content", "important")
+                submitBtn.style.setProperty("flex", "0 0 auto", "important")
+            }
+
+            // Strip every margin/padding on every ancestor between the
+            // submit button and the form root — this kills any spacer
+            // wrapper HubSpot may add. Re-add 12px above the submit row
+            // afterwards.
+            if (submitBtn) {
+                let el: HTMLElement | null = submitBtn.parentElement as HTMLElement | null
+                while (el && el !== formEl) {
+                    el.style.setProperty("margin", "0", "important")
+                    el.style.setProperty("padding-top", "0", "important")
+                    el.style.setProperty("padding-bottom", "0", "important")
+                    el = el.parentElement
+                }
+            }
+
+            // Walk through any single-child wrapper chain to find the
+            // rows container (form > .hs-form-private > rows is common).
+            let rowContainer: HTMLElement = formEl
+            while (rowContainer.children.length === 1) {
+                const onlyChild = rowContainer.firstElementChild as HTMLElement | null
+                if (!onlyChild) break
+                if (["INPUT","BUTTON","TEXTAREA","SELECT","LABEL"].includes(onlyChild.tagName)) break
+                rowContainer = onlyChild
+            }
+            ;[formEl, rowContainer].forEach(el => {
+                el.style.setProperty("display", "block", "important")
+                el.style.setProperty("gap", "0", "important")
+                el.style.setProperty("row-gap", "0", "important")
+                el.style.setProperty("padding-top", "0", "important")
+                el.style.setProperty("padding-bottom", "0", "important")
+            })
+
+            const hasCheckbox = (el: Element) =>
+                el.classList.contains("hs-fieldtype-booleancheckbox") ||
+                el.classList.contains("hs-fieldtype-checkbox") ||
+                !!el.querySelector('input[type="checkbox"]')
+            const isRichText = (el: Element) => {
+                const cls = (el.className || "").toString().toLowerCase()
+                return /richtext|legal|consent/.test(cls) ||
+                    !!el.querySelector(".hs-richtext, .hs-form-richtext, .legal-consent-container")
+            }
+            const isSubmit = (el: Element) =>
+                el.classList.contains("hs-submit") ||
+                el.classList.contains("actions") ||
+                !!el.querySelector('button[type="submit"], input[type="submit"]')
+
+            const rows = Array.from(rowContainer.children).filter(el => {
+                const t = el.tagName.toLowerCase()
+                return t !== "style" && t !== "script"
+            }) as HTMLElement[]
+
+            rows.forEach((row, idx) => {
+                row.style.setProperty("margin-top", "0", "important")
+                row.style.setProperty("padding-top", "0", "important")
+                row.style.setProperty("padding-bottom", "0", "important")
+                let mb = "30px"
+                if (hasCheckbox(row) || isRichText(row)) mb = "12px"
+                if (isSubmit(row)) mb = "0px"
+                const next = rows[idx + 1]
+                if (next && isSubmit(next)) mb = "12px"
+                row.style.setProperty("margin-bottom", mb, "important")
+            })
+
+            // eslint-disable-next-line no-console
+            console.log("[CogentBrandedHubSpotForm] rows:", rows.map(r => ({
+                tag: r.tagName,
+                cls: r.className,
+                isCheckbox: hasCheckbox(r),
+                isRichText: isRichText(r),
+                isSubmit: isSubmit(r),
+                mb: r.style.marginBottom,
+            })))
+        }
+
+        const apply = () => {
+            const formEl = container.querySelector("form")
+            if (!formEl) return
+            if (!hiddenInjected) {
+                hiddenInjected = true
+                applyHiddenFields(formEl)
+            }
+            applyLayoutFixes(formEl)
+        }
+
+        // Path 1: hsFormCallback events
+        const callbackHandler = (event: Event) => {
             const detail = (event as CustomEvent).detail
             if (!detail) return
             const eventType = detail.type || detail.eventName
-
-            if (eventType === "onFormReady") {
-                const formEl = containerRef.current?.querySelector("form")
-                if (!formEl) return
-
-                let tracked: Record<string, string> = {}
-                try { tracked = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "{}") } catch {}
-
-                const setField = (name: string, value: string) => {
-                    const input = formEl.querySelector(`input[name="${name}"]`) as HTMLInputElement | null
-                    if (input && value) {
-                        input.value = value
-                        // Trigger React-style change event so HubSpot picks it up
-                        input.dispatchEvent(new Event("input", { bubbles: true }))
-                        input.dispatchEvent(new Event("change", { bubbles: true }))
-                    }
-                }
-
-                ;["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"].forEach(k => {
-                    setField(k, tracked[k] || "")
-                })
-                if (cidValue) setField("cid", cidValue)
-
-                // ── Force-fix layout via inline styles ──
-                // External CSS overrides keep losing to HubSpot's stylesheet.
-                // Inline style.setProperty with "important" wins regardless.
-
-                // Submit button: natural width
-                const submitBtn = formEl.querySelector(
-                    'button[type="submit"], input[type="submit"]'
-                ) as HTMLElement | null
-                if (submitBtn) {
-                    submitBtn.style.setProperty("width", "fit-content", "important")
-                    submitBtn.style.setProperty("max-width", "fit-content", "important")
-                    submitBtn.style.setProperty("flex", "0 0 auto", "important")
-                }
-
-                // Walk through any single-child wrapper chain to find the
-                // actual rows container (e.g. form > .hs-form-private > rows).
-                let rowContainer: HTMLElement = formEl
-                while (rowContainer.children.length === 1) {
-                    const onlyChild = rowContainer.firstElementChild as HTMLElement | null
-                    if (!onlyChild) break
-                    if (["INPUT","BUTTON","TEXTAREA","SELECT","LABEL"].includes(onlyChild.tagName)) break
-                    rowContainer = onlyChild
-                }
-
-                // Reset any flex/grid auto-gap on form + its single-child chain
-                ;[formEl, rowContainer].forEach(el => {
-                    el.style.setProperty("display", "block", "important")
-                    el.style.setProperty("gap", "0", "important")
-                    el.style.setProperty("row-gap", "0", "important")
-                    el.style.setProperty("padding-top", "0", "important")
-                    el.style.setProperty("padding-bottom", "0", "important")
-                })
-
-                // Row classifiers
-                const hasCheckbox = (el: Element) =>
-                    el.classList.contains("hs-fieldtype-booleancheckbox") ||
-                    el.classList.contains("hs-fieldtype-checkbox") ||
-                    !!el.querySelector('input[type="checkbox"]')
-                const isRichText = (el: Element) => {
-                    const cls = (el.className || "").toString().toLowerCase()
-                    return /richtext|legal|consent/.test(cls) ||
-                        !!el.querySelector(".hs-richtext, .hs-form-richtext, .legal-consent-container")
-                }
-                const isSubmit = (el: Element) =>
-                    el.classList.contains("hs-submit") ||
-                    el.classList.contains("actions") ||
-                    !!el.querySelector('button[type="submit"], input[type="submit"]')
-
-                const rows = Array.from(rowContainer.children).filter(el => {
-                    const t = el.tagName.toLowerCase()
-                    return t !== "style" && t !== "script"
-                }) as HTMLElement[]
-
-                rows.forEach((row, idx) => {
-                    row.style.setProperty("margin-top", "0", "important")
-                    row.style.setProperty("padding-top", "0", "important")
-                    row.style.setProperty("padding-bottom", "0", "important")
-                    let mb = "30px"
-                    if (hasCheckbox(row) || isRichText(row)) mb = "12px"
-                    if (isSubmit(row)) mb = "0px"
-                    // Whatever is immediately above the submit row shrinks to 12px
-                    const next = rows[idx + 1]
-                    if (next && isSubmit(next)) mb = "12px"
-                    row.style.setProperty("margin-bottom", mb, "important")
-                })
-
-                // Strip stray margin/padding from everything inside the
-                // submit row (HubSpot often wraps the button in extra divs
-                // with their own padding).
-                const submitRow = rows.find(isSubmit)
-                if (submitRow) {
-                    submitRow.querySelectorAll("*").forEach(el => {
-                        const e = el as HTMLElement
-                        e.style.setProperty("margin", "0", "important")
-                        if (e.tagName !== "BUTTON" && e.tagName !== "INPUT") {
-                            e.style.setProperty("padding", "0", "important")
-                        }
-                    })
-                }
-
-                // eslint-disable-next-line no-console
-                console.log("[CogentBrandedHubSpotForm] rows:", rows.map(r => ({
-                    tag: r.tagName,
-                    cls: r.className,
-                    isCheckbox: hasCheckbox(r),
-                    isRichText: isRichText(r),
-                    isSubmit: isSubmit(r),
-                    mb: r.style.marginBottom,
-                })))
-            }
-
+            if (eventType === "onFormReady") apply()
             if (eventType === "onFormSubmitted") {
                 setSubmitted(true)
                 try { sessionStorage.removeItem(SESSION_KEY) } catch {}
             }
         }
-        document.addEventListener("hsFormCallback", handler)
-        return () => document.removeEventListener("hsFormCallback", handler)
+        document.addEventListener("hsFormCallback", callbackHandler)
+        window.addEventListener("hsFormCallback", callbackHandler)
+
+        // Path 2: MutationObserver — re-apply on every DOM mutation
+        // inside the container. Catches cases where hsFormCallback
+        // races with our listener attachment.
+        const observer = new MutationObserver(() => apply())
+        observer.observe(container, { childList: true, subtree: true })
+
+        // Initial pass in case the form is already there
+        apply()
+
+        return () => {
+            document.removeEventListener("hsFormCallback", callbackHandler)
+            window.removeEventListener("hsFormCallback", callbackHandler)
+            observer.disconnect()
+        }
     }, [cidValue])
 
     // ── Custom Success State ──────────────────────────────
