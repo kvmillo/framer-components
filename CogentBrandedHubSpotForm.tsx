@@ -118,8 +118,13 @@ export default function CogentBrandedHubSpotForm(props: Props) {
                 })
                 if (cidValue) setField("cid", cidValue)
 
-                // Belt-and-suspenders: force button width via inline style
-                // (in case HubSpot's CSS beats our !important override).
+                // ── Force-fix layout via inline styles ──
+                // External CSS overrides keep losing to HubSpot's stylesheet
+                // (likely specificity/order). Inline style.setProperty with
+                // "important" wins regardless. Apply only to layout: spacing
+                // + button width. Visual styling stays in --hsf-* vars + CSS.
+
+                // Submit button: natural width
                 const submitBtn = formEl.querySelector(
                     'button[type="submit"], input[type="submit"]'
                 ) as HTMLElement | null
@@ -128,6 +133,48 @@ export default function CogentBrandedHubSpotForm(props: Props) {
                     submitBtn.style.setProperty("max-width", "fit-content", "important")
                     submitBtn.style.setProperty("flex", "0 0 auto", "important")
                 }
+
+                // Form container: own its layout (no auto gap)
+                formEl.style.setProperty("display", "block", "important")
+                formEl.style.setProperty("gap", "0", "important")
+                formEl.style.setProperty("row-gap", "0", "important")
+
+                // Walk every direct child of the form, set explicit
+                // margin-bottom based on row type.
+                const isCheckboxRow = (el: Element) =>
+                    el.classList.contains("hs-fieldtype-booleancheckbox") ||
+                    el.classList.contains("hs-fieldtype-checkbox") ||
+                    !!el.querySelector('input[type="checkbox"]')
+                const isRichTextRow = (el: Element) =>
+                    el.classList.contains("hs-richtext") ||
+                    el.classList.contains("hs-form-richtext") ||
+                    el.classList.contains("legal-consent-container") ||
+                    !!el.querySelector(".hs-richtext, .hs-form-richtext, .legal-consent-container")
+                const isSubmitRow = (el: Element) =>
+                    el.classList.contains("hs-submit") ||
+                    el.classList.contains("actions") ||
+                    !!el.querySelector('button[type="submit"], input[type="submit"]')
+
+                const applySpacing = (root: Element) => {
+                    const rows = Array.from(root.children) as HTMLElement[]
+                    rows.forEach(row => {
+                        row.style.setProperty("margin-top", "0", "important")
+                        row.style.setProperty("padding-top", "0", "important")
+                        row.style.setProperty("padding-bottom", "0", "important")
+                        let mb = "30px"
+                        if (isCheckboxRow(row) || isRichTextRow(row)) mb = "12px"
+                        if (isSubmitRow(row)) mb = "0px"
+                        row.style.setProperty("margin-bottom", mb, "important")
+                    })
+                }
+                applySpacing(formEl)
+                // Some HubSpot embeds wrap rows one level deeper — apply to
+                // grandchildren of any direct child that has its own children.
+                Array.from(formEl.children).forEach(child => {
+                    if ((child as HTMLElement).children.length > 0) {
+                        applySpacing(child)
+                    }
+                })
             }
 
             if (eventType === "onFormSubmitted") {
@@ -454,65 +501,9 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   background-color: ${BUTTON_BG_HOVER} !important;
 }
 
-/* ── Row spacing — nuclear reset, then explicit re-apply ── */
-/* Step 1: kill EVERY margin/padding/gap inside the form, including
-   anything HubSpot's stylesheet adds. */
-.hs-form-html form,
-.hs-form-html form > *,
-.hs-form-html form > * > * {
-  margin: 0 !important;
-  row-gap: 0 !important;
-  column-gap: 0 !important;
-  gap: 0 !important;
-}
-.hs-form-html form > *,
-.hs-form-html form > * > * {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-/* Step 2: re-apply input vertical padding (was killed above). */
-.hs-form-html input[type="text"],
-.hs-form-html input[type="email"],
-.hs-form-html input[type="tel"],
-.hs-form-html input[type="number"],
-.hs-form-html input[type="date"],
-.hs-form-html input[type="url"],
-.hs-form-html select,
-.hs-form-html textarea {
-  padding-top: ${INPUT_PADDING} !important;
-  padding-bottom: ${INPUT_PADDING} !important;
-}
-
-/* Step 3: label → input gap (HubSpot's --hsf-module__vertical-spacing
-   doesn't survive the reset, so set it explicitly). */
-.hs-form-html .hs-form-field > label,
-.hs-form-html .hs-form-field > legend,
-.hs-form-html .hs-form-field label.hs-input-label {
-  display: block !important;
-  margin-bottom: ${LABEL_GAP}px !important;
-}
-
-/* Step 4: vertical rhythm between rows via sibling combinator —
-   no per-row margin-bottom, so nothing can stack. Default 30px;
-   tighter (12px) when the previous sibling is checkbox/richtext. */
-.hs-form-html form > * + *,
-.hs-form-html form > * > * + * {
-  margin-top: ${ROW_GAP}px !important;
-}
-.hs-form-html form > .hs-fieldtype-booleancheckbox + *,
-.hs-form-html form > .hs-fieldtype-checkbox + *,
-.hs-form-html form > :has(> input[type="checkbox"]) + *,
-.hs-form-html form > .hs-richtext + *,
-.hs-form-html form > .hs-form-richtext + *,
-.hs-form-html form > .legal-consent-container + *,
-.hs-form-html form > * > .hs-fieldtype-booleancheckbox + *,
-.hs-form-html form > * > .hs-fieldtype-checkbox + *,
-.hs-form-html form > * > .hs-richtext + *,
-.hs-form-html form > * > .hs-form-richtext + *,
-.hs-form-html form > * > .legal-consent-container + * {
-  margin-top: 12px !important;
-}
+/* ── Row spacing is applied via JS inline styles in onFormReady ──
+   (CSS approach kept losing to HubSpot's stylesheet specificity / load
+   order). Search the .tsx for `applySpacing` to see / tweak values. */
 
 /* ── Rich text links (Privacy Notice / legal blocks) ── */
 .hs-form-html .hs-richtext a,
