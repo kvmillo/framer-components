@@ -386,15 +386,38 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   opacity: 1 !important;
 }
 
-/* ── Submit button — full width + hover ── */
+/* ── Submit button — natural width, Cogent type spec ── */
+.hs-form-html .hs-submit,
+.hs-form-html .actions {
+  text-align: left !important;
+  width: 100%;
+}
 .hs-form-html button[type="submit"],
 .hs-form-html input[type="submit"],
 .hs-form-html .hs-button {
-  width: 100% !important;
-  max-width: 100% !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  padding: ${BUTTON_PADDING} !important;
+  font-family: ${FONT} !important;
+  font-size: 16px !important;
+  line-height: 1.2em !important;
+  letter-spacing: 0em !important;
+  font-weight: 400 !important;
   cursor: pointer !important;
   transition: background-color ${TRANSITION} !important;
   border: none !important;
+  border-radius: ${BUTTON_RADIUS}px !important;
+  background-color: ${BUTTON_BG} !important;
+  color: ${BUTTON_TEXT_COLOR} !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  align-self: flex-start !important;
+  box-shadow: none !important;
 }
 .hs-form-html button[type="submit"]:hover,
 .hs-form-html input[type="submit"]:hover,
