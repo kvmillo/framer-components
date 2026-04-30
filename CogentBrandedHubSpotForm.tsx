@@ -503,7 +503,7 @@ export default function CogentBrandedHubSpotForm(props: Props) {
 
 /* ── Row spacing is applied via JS inline styles in onFormReady ──
    (CSS approach kept losing to HubSpot's stylesheet specificity / load
-   order). Search the .tsx for `applySpacing` to see / tweak values. */
+   order). Search the .tsx for applySpacing to see / tweak values. */
 
 /* ── Rich text links (Privacy Notice / legal blocks) ── */
 .hs-form-html .hs-richtext a,
