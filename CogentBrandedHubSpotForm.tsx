@@ -282,14 +282,96 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   box-shadow: none !important;
 }
 
-/* ── Checkbox label color ── */
-.hs-form-html .hs-form-checkbox-display span,
-.hs-form-html .hs-form-booleancheckbox-display span,
-.hs-form-html .hs-fieldtype-booleancheckbox label,
-.hs-form-html .hs-fieldtype-checkbox label {
-  color: ${CHECKBOX_LABEL_COLOR} !important;
+/* ── Custom checkbox (matches CogentHubSpotForm) ── */
+/* Hide native input + any HubSpot-rendered visual */
+.hs-form-html input[type="checkbox"],
+.hs-form-html input[type="radio"] {
+  position: absolute !important;
+  opacity: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  left: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 2;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Container — relative anchor for the fake box */
+.hs-form-html .hs-form-booleancheckbox-display,
+.hs-form-html .hs-form-checkbox-display,
+.hs-form-html .hs-form-radio-display {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding-left: 24px !important;
+  cursor: pointer !important;
+  min-height: 16px !important;
+  background: transparent !important;
+  border: none !important;
+  font-family: ${FONT} !important;
   font-size: 16px !important;
+  line-height: 1.4em !important;
   letter-spacing: -0.02em !important;
+  color: ${CHECKBOX_LABEL_COLOR} !important;
+}
+
+/* Fake box */
+.hs-form-html .hs-form-booleancheckbox-display::before,
+.hs-form-html .hs-form-checkbox-display::before,
+.hs-form-html .hs-form-radio-display::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: ${INPUT_BG} !important;
+  border: 1px solid ${BORDER_DEFAULT} !important;
+  border-radius: 2px !important;
+  transition: border-color ${TRANSITION} !important;
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+/* Inner orange (hidden until :checked) */
+.hs-form-html .hs-form-booleancheckbox-display::after,
+.hs-form-html .hs-form-checkbox-display::after,
+.hs-form-html .hs-form-radio-display::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 4px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 8px !important;
+  height: 8px !important;
+  background: ${CHECKBOX_INNER_COLOR} !important;
+  opacity: 0 !important;
+  transition: opacity ${TRANSITION} !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
+/* Hover */
+.hs-form-html .hs-form-booleancheckbox-display:hover::before,
+.hs-form-html .hs-form-checkbox-display:hover::before,
+.hs-form-html .hs-form-radio-display:hover::before {
+  border-color: ${BORDER_FOCUS} !important;
+}
+
+/* Checked — uses :has() (modern browsers, Dec 2023+) */
+.hs-form-html .hs-form-booleancheckbox-display:has(input:checked)::after,
+.hs-form-html .hs-form-checkbox-display:has(input:checked)::after,
+.hs-form-html .hs-form-radio-display:has(input:checked)::after {
+  opacity: 1 !important;
 }
 
 /* ── Submit button — full width + hover ── */
@@ -308,14 +390,20 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   background-color: ${BUTTON_BG_HOVER} !important;
 }
 
-/* ── Rich text links (e.g. Privacy Notice in HubSpot legal block) ── */
-.hs-form-html .hs-richtext a {
-  color: inherit;
-  text-decoration: underline;
-  transition: color ${TRANSITION};
+/* ── Rich text links (Privacy Notice / legal blocks) ── */
+.hs-form-html .hs-richtext a,
+.hs-form-html .hs-form-richtext a,
+.hs-form-html .legal-consent-container a,
+.hs-form-html p a {
+  color: inherit !important;
+  text-decoration: underline !important;
+  transition: color ${TRANSITION} !important;
 }
-.hs-form-html .hs-richtext a:hover {
-  color: #111111;
+.hs-form-html .hs-richtext a:hover,
+.hs-form-html .hs-form-richtext a:hover,
+.hs-form-html .legal-consent-container a:hover,
+.hs-form-html p a:hover {
+  color: #111111 !important;
 }
 
 /* ── Error helper text ── */
