@@ -282,10 +282,12 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   box-shadow: none !important;
 }
 
-/* ── Custom checkbox (matches CogentHubSpotForm) ── */
-/* Hide native input + any HubSpot-rendered visual */
+/* ── Custom checkbox/radio (matches CogentHubSpotForm 1:1) ── */
+/* Hide the real input — keep it positioned over the fake box for clicks */
 .hs-form-html input[type="checkbox"],
 .hs-form-html input[type="radio"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
   position: absolute !important;
   opacity: 0 !important;
   width: 16px !important;
@@ -297,13 +299,15 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   top: 50% !important;
   transform: translateY(-50%) !important;
   z-index: 2;
-  appearance: none !important;
-  -webkit-appearance: none !important;
   background: transparent !important;
   border: none !important;
 }
 
-/* Container — relative anchor for the fake box */
+/* Container — any element wrapping a checkbox/radio. Uses :has() so we
+   don't depend on HubSpot's specific class names. Falls back to any
+   known HubSpot wrapper classes too. */
+.hs-form-html label:has(> input[type="checkbox"]),
+.hs-form-html label:has(> input[type="radio"]),
 .hs-form-html .hs-form-booleancheckbox-display,
 .hs-form-html .hs-form-checkbox-display,
 .hs-form-html .hs-form-radio-display {
@@ -320,10 +324,13 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   font-size: 16px !important;
   line-height: 1.4em !important;
   letter-spacing: -0.02em !important;
-  color: ${CHECKBOX_LABEL_COLOR} !important;
+  color: ${INPUT_VALUE_COLOR} !important;
+  font-weight: 400 !important;
 }
 
-/* Fake box */
+/* Fake box (the visible checkbox) */
+.hs-form-html label:has(> input[type="checkbox"])::before,
+.hs-form-html label:has(> input[type="radio"])::before,
 .hs-form-html .hs-form-booleancheckbox-display::before,
 .hs-form-html .hs-form-checkbox-display::before,
 .hs-form-html .hs-form-radio-display::before {
@@ -342,7 +349,9 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   display: block !important;
 }
 
-/* Inner orange (hidden until :checked) */
+/* Inner orange — hidden by default, fades in on :checked */
+.hs-form-html label:has(> input[type="checkbox"])::after,
+.hs-form-html label:has(> input[type="radio"])::after,
 .hs-form-html .hs-form-booleancheckbox-display::after,
 .hs-form-html .hs-form-checkbox-display::after,
 .hs-form-html .hs-form-radio-display::after {
@@ -360,14 +369,17 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   pointer-events: none !important;
 }
 
-/* Hover */
+/* Hover — border darkens */
+.hs-form-html label:has(> input[type="checkbox"]):hover::before,
+.hs-form-html label:has(> input[type="radio"]):hover::before,
 .hs-form-html .hs-form-booleancheckbox-display:hover::before,
 .hs-form-html .hs-form-checkbox-display:hover::before,
 .hs-form-html .hs-form-radio-display:hover::before {
   border-color: ${BORDER_FOCUS} !important;
 }
 
-/* Checked — uses :has() (modern browsers, Dec 2023+) */
+/* Checked — show the orange inner */
+.hs-form-html label:has(input:checked)::after,
 .hs-form-html .hs-form-booleancheckbox-display:has(input:checked)::after,
 .hs-form-html .hs-form-checkbox-display:has(input:checked)::after,
 .hs-form-html .hs-form-radio-display:has(input:checked)::after {
