@@ -117,6 +117,17 @@ export default function CogentBrandedHubSpotForm(props: Props) {
                     setField(k, tracked[k] || "")
                 })
                 if (cidValue) setField("cid", cidValue)
+
+                // Belt-and-suspenders: force button width via inline style
+                // (in case HubSpot's CSS beats our !important override).
+                const submitBtn = formEl.querySelector(
+                    'button[type="submit"], input[type="submit"]'
+                ) as HTMLElement | null
+                if (submitBtn) {
+                    submitBtn.style.setProperty("width", "fit-content", "important")
+                    submitBtn.style.setProperty("max-width", "fit-content", "important")
+                    submitBtn.style.setProperty("flex", "0 0 auto", "important")
+                }
             }
 
             if (eventType === "onFormSubmitted") {
@@ -387,17 +398,35 @@ export default function CogentBrandedHubSpotForm(props: Props) {
 }
 
 /* ── Submit button — natural width, Cogent type spec ── */
+/* Force the button's parent to behave as a normal flex row so the button
+   doesn't get stretched by HubSpot's default styling. */
 .hs-form-html .hs-submit,
-.hs-form-html .actions {
+.hs-form-html .actions,
+.hs-form-html div:has(> button[type="submit"]),
+.hs-form-html div:has(> input[type="submit"]) {
   text-align: left !important;
-  width: 100%;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
 }
 .hs-form-html button[type="submit"],
 .hs-form-html input[type="submit"],
-.hs-form-html .hs-button {
-  width: auto !important;
-  max-width: none !important;
+.hs-form-html .hs-button,
+.hs-form-html button.primary,
+.hs-form-html .submit-button,
+.hs-form-html .actions > button,
+.hs-form-html .actions > input[type="submit"],
+.hs-form-html .hs-submit > button,
+.hs-form-html .hs-submit > input[type="submit"] {
+  width: fit-content !important;
+  max-width: fit-content !important;
   min-width: 0 !important;
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  align-self: flex-start !important;
   height: 42px !important;
   padding: ${BUTTON_PADDING} !important;
   font-family: ${FONT} !important;
@@ -415,13 +444,13 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  flex: 0 0 auto !important;
-  align-self: flex-start !important;
   box-shadow: none !important;
 }
 .hs-form-html button[type="submit"]:hover,
 .hs-form-html input[type="submit"]:hover,
-.hs-form-html .hs-button:hover {
+.hs-form-html .hs-button:hover,
+.hs-form-html button.primary:hover,
+.hs-form-html .submit-button:hover {
   background-color: ${BUTTON_BG_HOVER} !important;
 }
 
