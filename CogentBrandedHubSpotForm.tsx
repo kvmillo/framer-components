@@ -454,6 +454,35 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   background-color: ${BUTTON_BG_HOVER} !important;
 }
 
+/* ── Tighter spacing under checkbox / richtext / above submit ── */
+/* Inputs keep the default --hsf-row__vertical-spacing (30px). The
+   checkbox, richtext blocks, and the submit row collapse to 12px. */
+.hs-form-html .hs-fieldtype-booleancheckbox,
+.hs-form-html .hs-fieldtype-checkbox,
+.hs-form-html .hs-form-field:has(> .hs-form-booleancheckbox-display),
+.hs-form-html .hs-form-field:has(input[type="checkbox"]) {
+  margin-bottom: 12px !important;
+  padding-bottom: 0 !important;
+}
+
+.hs-form-html .hs-richtext,
+.hs-form-html .hs-form-richtext,
+.hs-form-html .legal-consent-container {
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.hs-form-html .hs-submit,
+.hs-form-html .actions:has(> button[type="submit"]),
+.hs-form-html .actions:has(> input[type="submit"]) {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 /* ── Rich text links (Privacy Notice / legal blocks) ── */
 .hs-form-html .hs-richtext a,
 .hs-form-html .hs-form-richtext a,
