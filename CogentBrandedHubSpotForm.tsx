@@ -63,6 +63,13 @@ type Props = {
 }
 
 // ── Component ───────────────────────────────────────────────
+/**
+ * @framerDisableUnlink
+ * @framerIntrinsicWidth 480
+ * @framerIntrinsicHeight 600
+ * @framerSupportedLayoutWidth any-prefer-fixed
+ * @framerSupportedLayoutHeight any-prefer-fixed
+ */
 export default function CogentBrandedHubSpotForm(props: Props) {
     const {
         portalId = "48361805",
@@ -187,16 +194,6 @@ export default function CogentBrandedHubSpotForm(props: Props) {
                 if (next && isSubmit(next)) mb = "8px"
                 row.style.setProperty("margin-bottom", mb, "important")
             })
-
-            // eslint-disable-next-line no-console
-            console.log("[CogentBrandedHubSpotForm] rows:", rows.map(r => ({
-                tag: r.tagName,
-                cls: r.className,
-                isCheckbox: hasCheckbox(r),
-                isRichText: isRichText(r),
-                isSubmit: isSubmit(r),
-                mb: r.style.marginBottom,
-            })))
         }
 
         const apply = () => {
