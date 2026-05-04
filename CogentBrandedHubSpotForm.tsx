@@ -181,10 +181,10 @@ export default function CogentBrandedHubSpotForm(props: Props) {
                 row.style.setProperty("padding-top", "0", "important")
                 row.style.setProperty("padding-bottom", "0", "important")
                 let mb = "30px"
-                if (hasCheckbox(row) || isRichText(row)) mb = "12px"
+                if (hasCheckbox(row) || isRichText(row)) mb = "8px"
                 if (isSubmit(row)) mb = "0px"
                 const next = rows[idx + 1]
-                if (next && isSubmit(next)) mb = "12px"
+                if (next && isSubmit(next)) mb = "8px"
                 row.style.setProperty("margin-bottom", mb, "important")
             })
 
@@ -557,6 +557,30 @@ export default function CogentBrandedHubSpotForm(props: Props) {
 /* ── Row spacing is applied via JS inline styles in onFormReady ──
    (CSS approach kept losing to HubSpot's stylesheet specificity / load
    order). Search the .tsx for applySpacing to see / tweak values. */
+
+/* ── Rich text internal spacing — kill default <p>/heading margins
+   and container padding so the row's margin-bottom is the only gap.
+   Without this, browser-default <p> margins (~16px top/bottom) stack
+   on top of our row spacing and the checkbox→richtext→button gaps
+   look much larger than intended. ── */
+.hs-form-html .hs-richtext,
+.hs-form-html .hs-form-richtext,
+.hs-form-html .legal-consent-container {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.hs-form-html .hs-richtext p,
+.hs-form-html .hs-form-richtext p,
+.hs-form-html .legal-consent-container p,
+.hs-form-html .hs-richtext h1, .hs-form-html .hs-richtext h2,
+.hs-form-html .hs-richtext h3, .hs-form-html .hs-richtext h4,
+.hs-form-html .hs-richtext h5, .hs-form-html .hs-richtext h6,
+.hs-form-html .hs-form-richtext h1, .hs-form-html .hs-form-richtext h2,
+.hs-form-html .hs-form-richtext h3, .hs-form-html .hs-form-richtext h4,
+.hs-form-html .hs-form-richtext h5, .hs-form-html .hs-form-richtext h6 {
+  margin: 0 !important;
+  padding: 0 !important;
+}
 
 /* ── Rich text links (Privacy Notice / legal blocks) ── */
 .hs-form-html .hs-richtext a,
