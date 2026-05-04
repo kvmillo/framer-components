@@ -59,6 +59,7 @@ type Props = {
     region?: string
     cidValue?: string
     successContent?: React.ReactNode
+    debug?: boolean
     style?: React.CSSProperties
 }
 
@@ -77,6 +78,7 @@ export default function CogentBrandedHubSpotForm(props: Props) {
         region = "na2",
         cidValue,
         successContent,
+        debug = false,
         style,
     } = props
 
@@ -97,13 +99,30 @@ export default function CogentBrandedHubSpotForm(props: Props) {
     }, [portalId, formId, region])
 
     // Inject hidden field values + apply layout fixes whenever the form
-    // renders. Triggered by both:
-    //   1. hsFormCallback events
-    //   2. MutationObserver (catches DOM updates regardless of events)
+    // renders, and detect submission via three independent signals:
+    //   1. HubSpot custom events (hsFormCallback / hsFormEvent)
+    //   2. MutationObserver — HubSpot's thank-you element appearing
+    //   3. MutationObserver — the <form> being removed from the container
+    // First signal wins; subsequent ones are ignored. With `debug` on,
+    // every event and signal is logged to the console with [CogentForm].
     useEffect(() => {
         if (!containerRef.current) return
         const container = containerRef.current
         let hiddenInjected = false
+        let formWasPresent = false
+        let submittedFlag = false
+
+        const log = (...args: unknown[]) => {
+            if (debug) console.log("[CogentForm]", ...args)
+        }
+
+        const markSubmitted = (reason: string) => {
+            if (submittedFlag) return
+            submittedFlag = true
+            log("submitted →", reason)
+            setSubmitted(true)
+            try { sessionStorage.removeItem(SESSION_KEY) } catch {}
+        }
 
         const applyHiddenFields = (formEl: HTMLFormElement) => {
             let tracked: Record<string, string> = {}
@@ -196,45 +215,76 @@ export default function CogentBrandedHubSpotForm(props: Props) {
             })
         }
 
+        const SUCCESS_SELECTOR =
+            ".submitted-message, .hs-form-thankyou, .hs-thank-you-message, [data-hs-form-state='submitted']"
+
         const apply = () => {
+            // DOM signal A: explicit thank-you element injected
+            const successEl = container.querySelector(SUCCESS_SELECTOR)
+            if (successEl) {
+                markSubmitted(`DOM: matched ${SUCCESS_SELECTOR}`)
+                return
+            }
+
             const formEl = container.querySelector("form")
-            if (!formEl) return
+
+            // DOM signal B: form was here, now it's gone → success
+            if (!formEl) {
+                if (formWasPresent && !submittedFlag) {
+                    markSubmitted("DOM: <form> removed from container")
+                }
+                return
+            }
+
+            formWasPresent = true
             if (!hiddenInjected) {
                 hiddenInjected = true
+                log("form ready, injecting hidden fields")
                 applyHiddenFields(formEl)
             }
             applyLayoutFixes(formEl)
         }
 
-        // Path 1: hsFormCallback events
-        const callbackHandler = (event: Event) => {
+        // Event-based detection — listen for every variant HubSpot ships:
+        // hsFormCallback (most builds), hsFormEvent (some newer builds),
+        // on both document and window. Only `onFormSubmitted` is treated
+        // as success — `onFormSubmit` fires *before* the network round-
+        // trip and would falsely hide the form on validation errors.
+        const eventHandler = (event: Event) => {
             const detail = (event as CustomEvent).detail
+            log("event:", event.type, detail)
             if (!detail) return
-            const eventType = detail.type || detail.eventName
+            const eventType = String(detail.type || detail.eventName || "")
             if (eventType === "onFormReady") apply()
             if (eventType === "onFormSubmitted") {
-                setSubmitted(true)
-                try { sessionStorage.removeItem(SESSION_KEY) } catch {}
+                markSubmitted(`event ${event.type} type=${eventType}`)
             }
         }
-        document.addEventListener("hsFormCallback", callbackHandler)
-        window.addEventListener("hsFormCallback", callbackHandler)
+        const eventNames = ["hsFormCallback", "hsFormEvent"]
+        eventNames.forEach((n) => {
+            document.addEventListener(n, eventHandler)
+            window.addEventListener(n, eventHandler)
+        })
 
-        // Path 2: MutationObserver — re-apply on every DOM mutation
-        // inside the container. Catches cases where hsFormCallback
-        // races with our listener attachment.
+        // MutationObserver — catches both DOM signals (success element,
+        // form removal) and re-runs spacing/hidden-field injection on
+        // every container update.
         const observer = new MutationObserver(() => apply())
         observer.observe(container, { childList: true, subtree: true })
 
         // Initial pass in case the form is already there
         apply()
 
+        log("listeners attached, observer watching", container)
+
         return () => {
-            document.removeEventListener("hsFormCallback", callbackHandler)
-            window.removeEventListener("hsFormCallback", callbackHandler)
+            eventNames.forEach((n) => {
+                document.removeEventListener(n, eventHandler)
+                window.removeEventListener(n, eventHandler)
+            })
             observer.disconnect()
         }
-    }, [cidValue])
+    }, [cidValue, debug])
 
     // ── Custom Success State ──────────────────────────────
     if (submitted) {
@@ -645,5 +695,12 @@ addPropertyControls(CogentBrandedHubSpotForm, {
     successContent: {
         type: ControlType.ComponentInstance,
         title: "Success Slot",
+    },
+    debug: {
+        type: ControlType.Boolean,
+        title: "Debug",
+        defaultValue: false,
+        enabledTitle: "On",
+        disabledTitle: "Off",
     },
 })
