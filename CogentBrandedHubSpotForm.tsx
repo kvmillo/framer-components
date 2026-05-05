@@ -286,28 +286,13 @@ export default function CogentBrandedHubSpotForm(props: Props) {
         }
     }, [cidValue, debug])
 
-    // ── Custom Success State ──────────────────────────────
-    if (submitted) {
-        return (
-            <div className="cogent-hs-branded" style={{ width: "100%", ...style }}>
-                <style>{`
-                    .cogent-hs-branded .cogent-success{width:100%;display:flex;flex-direction:column;align-items:stretch}
-                    .cogent-hs-branded .cogent-success > *{width:100% !important;max-width:100% !important;flex:1 1 auto !important}
-                `}</style>
-                <div className="cogent-success">
-                    {successContent ?? (
-                        <div style={{ fontFamily: FONT, fontSize: 16, color: LABEL_COLOR }}>
-                            Thanks! We'll be in touch shortly.
-                        </div>
-                    )}
-                </div>
-            </div>
-        )
-    }
-
-    // ── Form ──────────────────────────────────────────────
+    // ── Single-tree render ───────────────────────────────
+    // We never swap JSX branches on submit. Instead the form container
+    // is hidden via display:none and the success content shown as a
+    // sibling. This keeps HubSpot's DOM target alive so its script
+    // never fights React over a removed node.
     return (
-        <div style={{ width: "100%", ...style }}>
+        <div className="cogent-hs-form" style={{ width: "100%", ...style }}>
             <style>{`
 :root {
   /* Global */
@@ -652,14 +637,42 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   line-height: 1.4em !important;
   color: ${ERROR_COLOR} !important;
 }
+
+/* ── Success slot ── */
+.cogent-hs-form .cogent-success {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.cogent-hs-form .cogent-success > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 1 1 auto !important;
+}
             `}</style>
 
+            {/* Success content — visible only after submit */}
+            {submitted && (
+                <div className="cogent-success">
+                    {successContent ?? (
+                        <div style={{ fontFamily: FONT, fontSize: 16, color: LABEL_COLOR }}>
+                            Thanks! We'll be in touch shortly.
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Form container — always in the DOM, hidden on submit.
+                Keeping it mounted means HubSpot's script never loses
+                its target and React never fights the injected DOM. */}
             <div
                 ref={containerRef}
                 className="hs-form-html"
                 data-region={region}
                 data-form-id={formId}
                 data-portal-id={portalId}
+                style={{ display: submitted ? "none" : undefined }}
             />
         </div>
     )
