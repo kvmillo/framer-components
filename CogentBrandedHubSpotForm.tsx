@@ -120,6 +120,23 @@ export default function CogentBrandedHubSpotForm(props: Props) {
             if (submittedFlag) return
             submittedFlag = true
             log("submitted →", reason)
+
+            // Immediately hide the container via direct DOM — don't wait
+            // for React's re-render cycle. HubSpot injects its own
+            // thank-you message synchronously on submit, so we have to
+            // suppress it before the browser paints.
+            container.style.setProperty("display", "none", "important")
+
+            // Also kill any HubSpot success elements that may have been
+            // injected into the container's parent (some embed versions
+            // place the thank-you outside the data-portal-id div).
+            const parent = container.parentElement
+            if (parent) {
+                parent.querySelectorAll(SUCCESS_SELECTOR).forEach((el) =>
+                    (el as HTMLElement).style.setProperty("display", "none", "important")
+                )
+            }
+
             setSubmitted(true)
             try { sessionStorage.removeItem(SESSION_KEY) } catch {}
         }
@@ -636,6 +653,14 @@ export default function CogentBrandedHubSpotForm(props: Props) {
   font-size: 8px !important;
   line-height: 1.4em !important;
   color: ${ERROR_COLOR} !important;
+}
+
+/* ── Suppress HubSpot's built-in thank-you — we show our own ── */
+.hs-form-html .submitted-message,
+.hs-form-html .hs-form-thankyou,
+.hs-form-html .hs-thank-you-message,
+.hs-form-html [data-hs-form-state='submitted'] {
+  display: none !important;
 }
 
 /* ── Success slot ── */
